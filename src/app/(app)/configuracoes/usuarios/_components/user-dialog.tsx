@@ -1,9 +1,10 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
-import { Loader2, Pencil, Plus } from "lucide-react"; // Adicionado icones
+import { KeyRound, Loader2, Pencil, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -40,6 +41,7 @@ import { toast } from "sonner";
 
 export function UserDialog({ user }: { user?: User }) {
   const [open, setOpen] = useState(false);
+  const [showPasswordField, setShowPasswordField] = useState(false);
 
   const form = useForm<UserFormData>({
     resolver: zodResolver(userFormSchema as any),
@@ -48,25 +50,31 @@ export function UserDialog({ user }: { user?: User }) {
       email: user?.email || "",
       helenaId: user?.helenaId || "",
       role: user?.role || ("" as any),
+      password: "",
     },
   });
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => form.reset(), [open]);
+  useEffect(() => {
+    form.reset();
+    setShowPasswordField(!user);
+  }, [open, user, form]);
 
   const mutation = useMutation({
     mutationFn: async (values: UserFormData) => {
-      if (user) return axios.put(`/api/users/${user.id}`, values);
-      return axios.post("/api/users", values);
+      const payload = { ...values };
+      if (!payload.password) delete payload.password;
+
+      if (user) return axios.put(`/api/users/${user.id}`, payload);
+      return axios.post("/api/users", payload);
     },
-    onSuccess: async () => {
-      toast.success("Operação realizada com sucesso.");
+    onSuccess: async ({ message }: any) => {
+      toast.success(message);
       await revalidatePath("/settings/users");
       setOpen(false);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error(error);
-      toast.error("Erro ao salvar o produto.");
+      toast.error(error.response?.data.error || "Erro ao salvar o usuário.");
     },
   });
 
@@ -78,20 +86,20 @@ export function UserDialog({ user }: { user?: User }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {user ? (
-          <Button variant="ghost" size="sm" className="">
+          <Button variant="ghost" size="sm">
             <Pencil className="size-3.5" />
           </Button>
         ) : (
           <Button>
-            <Plus className="mr-2 size-4" /> Criar Produto
+            <Plus className="mr-2 size-4" /> Novo Usuário
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-150 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Novo Produto</DialogTitle>
+          <DialogTitle>{user ? "Editar Usuário" : "Novo Usuário"}</DialogTitle>
           <DialogDescription>
-            Preencha os detalhes abaixo sobre o produto no sistema.
+            Preencha os detalhes abaixo para gerenciar o acesso ao sistema.
           </DialogDescription>
         </DialogHeader>
 
@@ -107,7 +115,7 @@ export function UserDialog({ user }: { user?: User }) {
                 <FormItem>
                   <FormLabel>Nome</FormLabel>
                   <FormControl>
-                    <Input placeholder="Nome do Vendedor" {...field} />
+                    <Input placeholder="Nome Completo" {...field} />
                   </FormControl>
                 </FormItem>
               )}
@@ -123,7 +131,7 @@ export function UserDialog({ user }: { user?: User }) {
                     <FormControl>
                       <Input
                         {...field}
-                        type="text"
+                        type="email"
                         placeholder="exemplo@exemplo.com"
                       />
                     </FormControl>
@@ -141,9 +149,9 @@ export function UserDialog({ user }: { user?: User }) {
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
-                      <FormControl className="w-full">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione uma permissão..." />
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Selecione..." />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -160,6 +168,56 @@ export function UserDialog({ user }: { user?: User }) {
               />
             </div>
 
+            {!showPasswordField ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <KeyRound className="size-4" />
+                  <span>A senha não será alterada</span>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowPasswordField(true)}
+                >
+                  Alterar Senha
+                </Button>
+              </div>
+            ) : (
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex justify-between">
+                      Nova Senha
+                      {user && (
+                        <button
+                          type="button"
+                          className="text-xs text-destructive underline"
+                          onClick={() => {
+                            setShowPasswordField(false);
+                            form.setValue("password", "");
+                          }}
+                        >
+                          Cancelar alteração
+                        </button>
+                      )}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="password"
+                        placeholder="Digite a nova senha"
+                        autoComplete="new-password"
+                      />
+                    </FormControl>
+                    <FormDescription>Mínimo de 6 caracteres.</FormDescription>
+                  </FormItem>
+                )}
+              />
+            )}
+
             <FormField
               control={form.control}
               name="helenaId"
@@ -169,9 +227,6 @@ export function UserDialog({ user }: { user?: User }) {
                   <FormControl>
                     <Input placeholder="00000000-0000..." {...field} />
                   </FormControl>
-                  <FormDescription>
-                    Identificador único externo.
-                  </FormDescription>
                 </FormItem>
               )}
             />
@@ -188,7 +243,7 @@ export function UserDialog({ user }: { user?: User }) {
                 {mutation.isPending && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                {"Salvar Usuario"}
+                Salvar Usuário
               </Button>
             </div>
           </form>

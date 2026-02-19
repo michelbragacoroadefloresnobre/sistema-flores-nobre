@@ -6,6 +6,7 @@ export const userFormSchema = z.object({
   helenaId: z.uuid("O ID Helena deve ser um UUID válido."),
   role: z.enum(Role, { message: "Selecione uma opção." }),
   email: z.email(),
+  password: z.string().optional(),
 });
 
 export type UserFormData = z.infer<typeof userFormSchema>;

@@ -351,7 +351,7 @@ export function MainNavbar() {
                     asChild
                     className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-2 text-xs focus:bg-accent"
                   >
-                    <Link href="/app/configuracoes/geral">
+                    <Link href="/configuracoes/usuarios">
                       <Settings className="h-3.5 w-3.5 text-muted-foreground" />
                       <span>Configurações</span>
                     </Link>
