@@ -1,0 +1,430 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Contact {
+  id                String     @id @default(cuid())
+  legalName         String?
+  ie                String?
+  name              String     @db.VarChar(255)
+  phone             String     @db.VarChar(15)
+  email             String     @db.VarChar(255)
+  personType        PersonType
+  taxId             String
+  zipCode           Int
+  address           String
+  addressNumber     String
+  addressComplement String
+  neighboorhood     String
+  ibge              String
+  city              City       @relation(fields: [ibge], references: [ibge])
+  orders            Order[]
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  @@map("contact")
+}
+
+model Product {
+  id        String            @id @default(cuid())
+  name      String            @db.VarChar(255)
+  amount    Decimal           @db.Decimal(10, 2)
+  size      ProductSize
+  height    String
+  width     String
+  helenaId  String            @db.Uuid
+  imageUrl  String
+  orders    Order[]
+  suppliers ProductSupplier[]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@map("product")
+}
+
+model Supplier {
+  id            String    @id @default(cuid())
+  name          String    @db.VarChar(150)
+  email         String
+  phone         String
+  cnpj          String
+  disabledUntil DateTime?
+  isRatified    Boolean
+  jid           String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  products       ProductSupplier[]
+  supplierPanels SupplierPanel[]
+  coverageAreas  CoverageArea[]
+
+  @@map("supplier")
+}
+
+model City {
+  ibge     String    @id
+  name     String
+  uf       UF
+  orders   Order[]
+  contacts Contact[]
+
+  @@map("city")
+}
+
+model CoverageArea {
+  id         String   @id @default(cuid())
+  name       String
+  freight    Decimal? @db.Decimal(10, 2)
+  start      Int
+  end        Int
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+
+  @@map("coverage_area")
+}
+
+model ProductSupplier {
+  amount     Decimal? @db.Decimal(10, 2)
+  rating     Int
+  supplierId String
+  productId  String
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([supplierId, productId])
+  @@map("product_supplier")
+}
+
+model SupplierPanel {
+  id           String              @id @default(cuid())
+  status       SupplierPanelStatus
+  supplierId   String
+  supplier     Supplier            @relation(fields: [supplierId], references: [id])
+  orderId      String
+  order        Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  expireAt     DateTime
+  imageUrl     String?
+  cost         Decimal?            @db.Decimal(10, 2)
+  freight      Decimal?            @db.Decimal(10, 2)
+  cancelReason String?
+  receiverName String?
+  deliveredAt  DateTime?
+  createdAt    DateTime            @default(now())
+
+  @@map("supplier_panel")
+}
+
+model Order {
+  id                        String          @id @default(cuid())
+  contactOrigin             ContactOrigin
+  orderStatus               OrderStatus
+  deliveryPeriod            DeliveryPeriod
+  deliveryUntil             DateTime
+  formId                    String
+  form                      Form            @relation(fields: [formId], references: [id])
+  userId                    String
+  user                      User            @relation(fields: [userId], references: [id])
+  isWaited                  Boolean         @default(false)
+  woocommerceId             String?
+  internalNote              String?
+  honoreeName               String
+  tributeCardPhrase         String?
+  tributeCardType           String
+  deliveryZipCode           Int
+  deliveryAddress           String
+  deliveryAddressNumber     String?
+  deliveryAddressComplement String?
+  deliveryNeighboorhood     String
+  ibge                      String
+  city                      City            @relation(fields: [ibge], references: [ibge])
+  productId                 String
+  product                   Product         @relation(fields: [productId], references: [id])
+  supplierNote              String
+  contactId                 String
+  contact                   Contact         @relation(fields: [contactId], references: [id])
+  payments                  Payment[]
+  supplierPanels            SupplierPanel[]
+  createdAt                 DateTime        @default(now())
+  updatedAt                 DateTime        @updatedAt
+  auditLogs                 AuditLog[]
+
+  @@map("order")
+}
+
+model Form {
+  id                 String              @id @default(cuid())
+  type               FormType
+  status             FormStatus
+  name               String
+  email              String
+  phone              String
+  sellerHelenaId     String?
+  source             String?
+  isCustomer         Boolean?
+  cancelReason       String?
+  createdAt          DateTime            @default(now())
+  conversionMessages ConversionMessage[]
+  orders             Order[]
+
+  @@map("form")
+}
+
+model CampaignData {
+  id     String  @id @default(cuid())
+  phone  String
+  gclid  String? @unique
+  gbraid String?
+  wbraid String?
+
+  @@map("campaign_data")
+}
+
+model ConversionMessage {
+  id         String                @id @default(cuid())
+  externalId String
+  type       ConversionMessageType
+  formId     String
+  form       Form                  @relation(fields: [formId], references: [id], onDelete: Cascade)
+  sessionId  String?
+  createdAt  DateTime              @default(now())
+
+  @@map("conversion_message")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  type        LogType
+  author      String
+  action      String
+  description String
+  changes     Json?
+  createdAt   DateTime @default(now())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("audit_log")
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  externalId        String?
+  boletoDueAt       DateTime?
+  isSiteSale        Boolean       @default(false)
+  amount            Decimal       @db.Decimal(10, 2)
+  proofOfPaymentUrl String?
+  refundAmount      Decimal?      @db.Decimal(10, 2)
+  status            PaymentStatus
+  type              PaymentType
+  text              String?
+  url               String?
+  orderId           String
+  order             Order         @relation(fields: [orderId], references: [id])
+  paidAt            DateTime?
+  createdAt         DateTime      @default(now())
+
+  @@map("payment")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  orders        Order[]
+
+  role Role
+
+  helenaId String?
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+enum ConversionMessageType {
+  WELLCOME
+  SECOND_ATTEMPT
+  FEEDBACK
+}
+
+enum FormType {
+  SITE_SALE
+  FORM_FN
+  MANUAL
+}
+
+enum FormStatus {
+  NOT_CONVERTED
+  CANCELLED
+  CONVERTED
+}
+
+enum ContactOrigin {
+  WHATSAPP
+  PHONE
+  NONE
+}
+
+enum PersonType {
+  PJ
+  PF
+}
+
+enum PaymentType {
+  BOLETO
+  CARD_CREDIT
+  PIX
+  PIX_CNPJ
+  MONEY
+  PATNERSHIP
+}
+
+enum PaymentStatus {
+  ACTIVE
+  PAID
+  CANCELLED
+}
+
+enum ProductSize {
+  DEFAULT
+  LARGE
+}
+
+enum DeliveryPeriod {
+  MORNING
+  AFTERNOON
+  EVENING
+  EXPRESS
+}
+
+enum OrderStatus {
+  PENDING_PREPARATION
+  PENDING_CANCELLED
+  PENDING_WAITING
+  PRODUCING_PREPARATION
+  PRODUCING_CONFIRMATION
+  DELIVERING_ON_ROUTE
+  DELIVERING_DELIVERED
+  FINALIZED
+  CANCELLED
+}
+
+enum SupplierPanelStatus {
+  WAITING
+  CONFIRMED
+  CANCELLED
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  SUPERVISOR
+  SELLER
+}
+
+enum UF {
+  AC
+  AL
+  AP
+  AM
+  BA
+  CE
+  DF
+  ES
+  GO
+  MA
+  MT
+  MS
+  MG
+  PA
+  PB
+  PR
+  PE
+  PI
+  RJ
+  RN
+  RS
+  RO
+  RR
+  SC
+  SP
+  SE
+  TO
+}
+
+enum LogType {
+  EDIT
+  APPROVAL
+  REJECTION
+  CANCELATION
+  STATUS_CHANGE
+  AUTOMATION
+  CREATION
+}
+
+enum WeekDay {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
