@@ -10,6 +10,7 @@ export const GET = createRoute(
     const users = await prisma.user.findMany({
       where: {
         role: searchParams.roles ? { in: searchParams.roles } : undefined,
+        banned: false,
       },
     });
     return {

@@ -64,12 +64,16 @@ export function UserDialog({ user }: { user?: User }) {
       const payload = { ...values };
       if (!payload.password) delete payload.password;
 
-      if (user) return axios.put(`/api/users/${user.id}`, payload);
-      return axios.post("/api/users", payload);
+      if (user)
+        return axios
+          .put(`/api/users/${user.id}`, payload)
+          .then((res) => res.data);
+
+      return axios.post("/api/users", payload).then((res) => res.data);
     },
-    onSuccess: async ({ message }: any) => {
+    onSuccess: async ({ message }) => {
       toast.success(message);
-      await revalidatePath("/settings/users");
+      await revalidatePath("/configuracoes/usuarios");
       setOpen(false);
     },
     onError: (error: any) => {

@@ -18,7 +18,7 @@ export const PUT = createRoute(
       },
     });
 
-    return "Produto criado com sucesso";
+    return "Produto editado com sucesso";
   },
   {
     body: productFormSchema,

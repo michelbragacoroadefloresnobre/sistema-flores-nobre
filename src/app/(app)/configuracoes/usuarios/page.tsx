@@ -13,6 +13,7 @@ import prisma from "@/lib/prisma";
 import { serialize } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { UserDeleteButton } from "./_components/user-delete-button";
 import { UserDialog } from "./_components/user-dialog";
 
 export const revalidate = 0;
@@ -34,6 +35,9 @@ export default async function ProductsPage({
       orderBy: { name: "asc" },
       take: PAGE_SIZE,
       skip: skip,
+      where: {
+        banned: false,
+      },
     }),
     prisma.product.count(),
   ]);
@@ -91,7 +95,7 @@ export default async function ProductsPage({
                   </TableCell>
                   <TableCell className="text-right pr-4">
                     <UserDialog user={user} />
-                    {/* <UserDeleteButton productId={product.id} /> */}
+                    <UserDeleteButton userId={user.id} />
                   </TableCell>
                 </TableRow>
               ))}

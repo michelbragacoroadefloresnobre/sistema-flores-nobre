@@ -14,11 +14,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { revalidatePath } from "@/lib/revalidate-sc";
 import axios from "axios";
-import { Loader2, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export function ProductDeleteButton({ productId }: { productId: string }) {
+export function UserDeleteButton({ userId: productId }: { userId: string }) {
   const [isPending, setIsPending] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -28,14 +28,13 @@ export function ProductDeleteButton({ productId }: { productId: string }) {
 
     try {
       const { message } = await axios
-        .delete(`/api/products/${productId}`)
+        .delete(`/api/users/${productId}`)
         .then((res) => res.data);
-
       toast.success(message);
       setOpen(false);
     } catch (e: any) {
       const errorMessage =
-        e.response?.data?.error || "Erro ao excluir produto.";
+        e.response?.data?.error || "Erro ao excluir usuario.";
       toast.error(errorMessage);
     } finally {
       setIsPending(false);
@@ -60,7 +59,7 @@ export function ProductDeleteButton({ productId }: { productId: string }) {
           <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
           <AlertDialogDescription>
             Esta ação não pode ser desfeita. Isso excluirá permanentemente o
-            produto do banco de dados e removerá os dados associados.
+            usuario do banco de dados e removerá os dados associados.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -69,14 +68,9 @@ export function ProductDeleteButton({ productId }: { productId: string }) {
           <AlertDialogAction
             onClick={handleDelete}
             disabled={isPending}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            variant={"destructive"}
           >
-            {isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Trash2 className="mr-2 h-4 w-4" />
-            )}
-            Excluir Produto
+            {isPending ? "Excluindo Usuario" : "Excluir Usuario"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

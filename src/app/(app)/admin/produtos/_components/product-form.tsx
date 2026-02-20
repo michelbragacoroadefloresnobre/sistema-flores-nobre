@@ -71,11 +71,12 @@ export function ProductDialog({ product }: { product?: Product }) {
 
   const mutation = useMutation({
     mutationFn: async (values: ProductFormData) => {
-      if (product) return axios.put(`/api/products/${product.id}`, values);
-      return axios.post("/api/products", values);
+      if (product)
+        return (await axios.put(`/api/products/${product.id}`, values)).data;
+      return (await axios.post("/api/products", values)).data;
     },
-    onSuccess: async () => {
-      toast.success("Operação realizada com sucesso.");
+    onSuccess: async ({ message }) => {
+      toast.success(message);
       await revalidatePath("/admin/products");
       setOpen(false);
     },

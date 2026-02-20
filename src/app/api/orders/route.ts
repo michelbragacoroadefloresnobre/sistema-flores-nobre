@@ -38,6 +38,7 @@ export const POST = createRoute(
     const seller = await prisma.user.findUnique({
       where: {
         id: body.sellerId,
+        banned: false,
       },
     });
 
