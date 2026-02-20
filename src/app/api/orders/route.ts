@@ -12,10 +12,8 @@ import { createRoute } from "@/lib/handler/route-handler";
 import prisma from "@/lib/prisma";
 import { createCityIfNotExists } from "@/modules/cities/city.service";
 import { createOrderSchema } from "@/modules/orders/dtos/create-order.dto";
-import {
-  notifyPayment,
-  processPayment,
-} from "@/modules/payments/payment.service";
+import { createPayment } from "@/modules/orders/order-creation.service";
+import { notifyPayment } from "@/modules/payments/payment.service";
 import { subDays } from "date-fns";
 import createHttpError from "http-errors";
 import { DateTime, Duration } from "luxon";
@@ -169,7 +167,7 @@ export const POST = createRoute(
         include: { product: true },
       });
 
-      const { payment } = await processPayment({
+      const { payment } = await createPayment({
         tx,
         body: {
           amount: body.amount,

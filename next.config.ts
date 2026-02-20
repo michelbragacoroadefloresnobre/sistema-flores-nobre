@@ -6,8 +6,16 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
+        hostname: "nobre-coroa-fotos.s3.us-east-1.amazonaws.com",
+        protocol: "https",
+      },
+      {
         protocol: "https",
         hostname: "picsum.photos",
+      },
+      {
+        hostname: "wowbouquet.com",
+        protocol: "https",
       },
     ],
   },

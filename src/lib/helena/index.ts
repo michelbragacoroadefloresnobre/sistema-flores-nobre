@@ -206,7 +206,7 @@ export const buildLinkPaymentMessage = (data: {
   honoreeName: string;
   deliveryLocal: string;
   deliveryHour: string;
-  tributeCard: string;
+  tributeCard: string | null;
   product: string;
   size: string;
 }) => {

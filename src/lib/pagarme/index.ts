@@ -33,28 +33,22 @@ async function createOrder(
 
   const charges = data?.charges[0];
 
-  if (charges?.last_transaction?.gateway_response?.code === "400") {
-    console.error(JSON.stringify(data, null, 2));
-    const message =
-      charges.last_transaction.gateway_response.errors?.[0].message;
-    if (message?.includes("CPF"))
+  console.log("Payment:", JSON.stringify(data, null, 2));
+
+  const lastTransaction = charges?.last_transaction;
+  const gatewayError = lastTransaction.gateway_response.errors?.[0]?.message;
+
+  if (lastTransaction?.gateway_response?.code === "400") {
+    if (gatewayError?.includes("CPF"))
       throw new createHttpError.BadRequest("O CPF cadastrado é invalido");
-    else if (message?.includes("CNPJ"))
+    else if (gatewayError?.includes("CNPJ"))
       throw new createHttpError.BadRequest("O CNPJ cadastrado é invalido");
     throw new createHttpError.BadRequest(
       "Verifique os dados e tente novamente",
     );
   }
 
-  if (
-    (charges.payment_method === "pix" || charges.payment_method === "boleto") &&
-    data.status !== "pending"
-  )
-    throw new createHttpError.BadRequest("Pagamento reprovado");
-  if (
-    charges.payment_method === "credit_card" &&
-    (data.status !== "paid" || charges.last_transaction.status !== "captured")
-  )
+  if (!lastTransaction.success)
     throw new createHttpError.BadRequest("Pagamento reprovado");
 
   return data;

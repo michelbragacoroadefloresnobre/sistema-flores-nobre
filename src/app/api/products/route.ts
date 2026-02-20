@@ -12,7 +12,6 @@ export const POST = createRoute(
         size: body.size,
         width: body.width,
         height: body.height,
-        helenaId: body.helenaId,
         imageUrl: body.imageUrl,
       },
     });

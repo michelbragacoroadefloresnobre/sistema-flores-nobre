@@ -13,7 +13,6 @@ export const PUT = createRoute(
         size: body.size,
         width: body.width,
         height: body.height,
-        helenaId: body.helenaId,
         imageUrl: body.imageUrl,
       },
     });
@@ -25,7 +24,7 @@ export const PUT = createRoute(
   },
 );
 
-export const DELETE = createRoute(async (requestAnimationFrame, { params }) => {
+export const DELETE = createRoute(async (req, { params }) => {
   const count = await prisma.order.count({
     where: { productId: params.id },
   });

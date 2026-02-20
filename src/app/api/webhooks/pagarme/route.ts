@@ -134,12 +134,12 @@ async function proccessPaidOrder(event: PagarmeOrder) {
       id: payment.orderId,
     },
     include: {
-      customer: true,
+      contact: true,
     },
   });
 
   await sendMessage(
-    order.customer.phone,
+    order.contact.phone,
     `*✅ Pagamento no valor de *R$ ${((charge.amount || 0) / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}* confirmado*\nMuito obrigado por comprar com a Coroa de Flores Nobre!\n\nPedido: *#NOBRE${order.id}*`,
   );
 

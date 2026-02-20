@@ -3,19 +3,18 @@ import { createRoute } from "@/lib/handler/route-handler";
 import prisma from "@/lib/prisma";
 import { paymentFormSchema } from "@/modules/payments/payment.dto";
 import {
+  createPayment,
   notifyPayment,
-  processPayment,
 } from "@/modules/payments/payment.service";
 
 export const POST = createRoute(
   async (req, { body }) => {
     const order = await prisma.order.findUniqueOrThrow({
       where: { id: body.orderId },
-      include: { product: true, customer: { include: { city: true } } },
+      include: { product: true, contact: { include: { city: true } } },
     });
 
-    const { payment } = await processPayment({
-      tx: prisma,
+    const { payment } = await createPayment({
       body: {
         amount: body.amount,
         type: body.paymentType,
@@ -25,20 +24,19 @@ export const POST = createRoute(
           body.paymentType === PaymentType.BOLETO ? body.boletoDue : undefined,
         productName: order.product.name,
       },
-      customer: order.customer,
-      city: order.customer.city,
+      customer: order.contact,
+      city: order.contact.city,
     });
 
     try {
       await notifyPayment({
         payment,
         order,
-        customer: order.customer,
+        customer: order.contact,
         product: order.product,
       });
     } catch (e) {
       console.error("Erro ao enviar mensagem para o cliente:", e);
-
       return "Pagamento criado com sucesso, mas houve um erro ao enviar a mensagem para o cliente.";
     }
 

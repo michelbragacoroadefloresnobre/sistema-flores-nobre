@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -38,7 +37,6 @@ model Product {
   size      ProductSize
   height    String
   width     String
-  helenaId  String            @db.Uuid
   imageUrl  String
   orders    Order[]
   suppliers ProductSupplier[]
@@ -347,6 +345,7 @@ enum PaymentStatus {
   ACTIVE
   PAID
   CANCELLED
+  PROCESSING
 }
 
 enum ProductSize {

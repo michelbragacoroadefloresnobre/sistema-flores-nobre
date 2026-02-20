@@ -134,6 +134,7 @@ export function PaymentsSection({
   const getStatusStyle = (status: PaymentStatus) => {
     switch (status) {
       case PaymentStatus.ACTIVE:
+      case PaymentStatus.PROCESSING:
         return "bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-300";
       case PaymentStatus.PAID:
         return "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-300";
@@ -156,8 +157,8 @@ export function PaymentsSection({
         return "CANCELADO";
       // case PaymentStatus.REFUNDED:
       //   return "ESTORNADO";
-      // case PaymentStatus.WAITING_ACTION:
-      //   return "AÇÃO NECESSÁRIA";
+      case PaymentStatus.PROCESSING:
+        return "PROCESSANDO";
       default:
         return "";
     }

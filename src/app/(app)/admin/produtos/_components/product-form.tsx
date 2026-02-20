@@ -19,11 +19,10 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage, // Importante para erros
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -60,7 +59,6 @@ export function ProductDialog({ product }: { product?: Product }) {
       amount: defaultAmount ? defaultAmount.toFixed(2) : "",
       width: product?.width || "",
       height: product?.height || "",
-      helenaId: product?.helenaId || "",
       size: product?.size || ("" as any),
       imageUrl: product?.imageUrl || "",
     },
@@ -80,9 +78,9 @@ export function ProductDialog({ product }: { product?: Product }) {
       await revalidatePath("/admin/products");
       setOpen(false);
     },
-    onError: (error) => {
-      console.error(error);
-      toast.error("Erro ao salvar o produto.");
+    onError: (error: any) => {
+      console.error("Erro ao salvar o produto:", error);
+      toast.error(error.response?.data.error || "Erro ao salvar o produto.");
     },
   });
 
@@ -250,22 +248,6 @@ export function ProductDialog({ product }: { product?: Product }) {
                 )}
               />
             </div>
-
-            <FormField
-              control={form.control}
-              name="helenaId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>ID Helena (UUID)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="00000000-0000..." {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Identificador único externo.
-                  </FormDescription>
-                </FormItem>
-              )}
-            />
 
             <div className="flex justify-end gap-3 pt-4">
               <Button

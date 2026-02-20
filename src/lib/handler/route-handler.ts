@@ -3,7 +3,6 @@ import createHttpError, { isHttpError } from "http-errors";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError, ZodSchema } from "zod";
 import { auth } from "../auth";
-import { IntrinsicException } from "./intrinsic-exception";
 
 export type PositiveResponseType = {
   message: string;
@@ -118,11 +117,7 @@ export function createRoute<B = any, Q = any>(
         );
       }
 
-      if (IntrinsicException.isIntrinsicException(error))
-        console.error(`[${error.name}] ${error.message}`);
-      else if (error instanceof Error)
-        console.error("[UnexpectedError]", error);
-      else console.error("[UnexpectedError]", error);
+      console.error("[UnexpectedError]", error);
 
       return NextResponse.json(
         { error: "Algo deu errado", status: 500 },
