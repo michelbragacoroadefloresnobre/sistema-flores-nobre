@@ -141,9 +141,6 @@ export function KanbanCardPending({ order }: { order: iOrderPending }) {
             <span className="text-xs text-muted-foreground font-medium">
               {order.seller.name}
             </span>
-            <span className="text-xs text-muted-foreground font-medium">
-              {order.productName.trim()}
-            </span>
           </div>
         </div>
 

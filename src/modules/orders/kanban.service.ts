@@ -6,7 +6,6 @@ import {
   iOrderPending,
   iOrderProducing,
 } from "@/modules/orders/dtos/kanban.dto";
-import { productSizeName } from "../products/product.mapper";
 
 export const getPendingOrders = async (): Promise<iOrderPending[]> => {
   const orders = await prisma.order.findMany({
@@ -24,7 +23,6 @@ export const getPendingOrders = async (): Promise<iOrderPending[]> => {
       contact: {
         select: { name: true, phone: true },
       },
-      product: { select: { name: true, size: true } },
       user: { select: { id: true, name: true } },
       payments: true,
       supplierPanels: {
@@ -55,7 +53,6 @@ export const getPendingOrders = async (): Promise<iOrderPending[]> => {
         deliveryZipCode: order.deliveryZipCode,
         customerName: order.contact.name,
         customerPhone: order.contact.phone,
-        productName: `${order.product.name} (${productSizeName[order.product.size]})`,
         amount: PaymentUtils.getOrderTotalAmount(order.payments),
         isPaid: PaymentUtils.isPaid(order.payments),
         hasRefunded: false,
@@ -82,7 +79,6 @@ export const getProducingOrders = async (): Promise<
       contact: {
         select: { name: true, phone: true },
       },
-      product: { select: { name: true, size: true } },
       user: { select: { id: true, name: true } },
       payments: true,
       supplierPanels: {
@@ -111,7 +107,6 @@ export const getProducingOrders = async (): Promise<
       },
       customerName: order.contact.name,
       customerPhone: order.contact.phone,
-      productName: `${order.product.name} (${productSizeName[order.product.size]})`,
       amount: PaymentUtils.getOrderTotalAmount(order.payments),
       isPaid: PaymentUtils.isPaid(order.payments),
       hasRefunded: false,
@@ -135,7 +130,6 @@ export const getDeliveringOrders = async (): Promise<
       contact: {
         select: { name: true, phone: true },
       },
-      product: { select: { name: true, size: true } },
       user: { select: { id: true, name: true } },
       payments: true,
       supplierPanels: {
@@ -165,7 +159,6 @@ export const getDeliveringOrders = async (): Promise<
       },
       customerName: order.contact.name,
       customerPhone: order.contact.phone,
-      productName: `${order.product.name} (${productSizeName[order.product.size]})`,
       amount: PaymentUtils.getOrderTotalAmount(order.payments),
       isPaid: PaymentUtils.isPaid(order.payments),
       hasRefunded: false,

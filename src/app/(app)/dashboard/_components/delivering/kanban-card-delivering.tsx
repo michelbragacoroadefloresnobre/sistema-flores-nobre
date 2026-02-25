@@ -7,16 +7,13 @@ import { iOrderDelivering } from "@/modules/orders/dtos/kanban.dto";
 import { DollarSign, Edit, Edit3, ImageIcon, LinkIcon } from "lucide-react";
 import { DateTime } from "luxon";
 import { default as Link } from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { FaWhatsapp } from "react-icons/fa";
 import { toast } from "sonner";
 import { BadgeStatus } from "../badge-status";
 import { OrderDisplay } from "../kanban-card-footer";
-import { KanbanImageDialog } from "../kanban-image-dialog";
 
 export function KanbanCardDelivering({ order }: { order: iOrderDelivering }) {
-  const [isImageOpen, setIsImageOpen] = useState(false);
-
   const status: "normal" | "warning" | "late" = useMemo(() => {
     const diffMinutes = DateTime.fromISO(order.deliveryUntil).diffNow(
       "minutes",
@@ -40,14 +37,6 @@ export function KanbanCardDelivering({ order }: { order: iOrderDelivering }) {
 
   return (
     <>
-      <KanbanImageDialog
-        panelId={order.supplierPanel.id}
-        productName={order.productName}
-        imageUrl={order.supplierPanel.imageUrl}
-        open={isImageOpen}
-        onOpenChange={setIsImageOpen}
-        showActionsButton={false}
-      />
       <div
         className={cn(
           "group flex flex-col rounded-r-xl rounded-l-sm bg-muted/40 text-card-foreground shadow-sm transition-all hover:shadow-md",
@@ -102,9 +91,6 @@ export function KanbanCardDelivering({ order }: { order: iOrderDelivering }) {
               <span className="text-xs text-muted-foreground font-medium">
                 {order.seller.name}
               </span>
-              <span className="text-xs text-muted-foreground font-medium">
-                {order.productName.trim()}
-              </span>
               <span className="text-xs font-semibold text-foreground truncate leading-none">
                 {order.supplierName}
               </span>
@@ -121,16 +107,6 @@ export function KanbanCardDelivering({ order }: { order: iOrderDelivering }) {
             />
 
             <div className="flex items-center gap-1">
-              <Button
-                variant={"ghost"}
-                disabled={!order.supplierPanel.imageUrl}
-                className="size size-7 text-muted-foreground hover:text-foreground"
-                onClick={() => setIsImageOpen(true)}
-                size={"icon"}
-              >
-                <ImageIcon className={cn("size-3.5")} />
-              </Button>
-
               <Button
                 variant={"ghost"}
                 className="size size-7 text-muted-foreground hover:text-foreground cursor-default"

@@ -30,14 +30,11 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
-import { Product, ProductSize } from "@/generated/prisma/browser";
 import { UFS } from "@/lib/env";
 import { formatZipCodeInput } from "@/lib/utils";
 import { EditOrderData } from "@/modules/orders/dtos/edit-order.dto";
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import { ChevronLeft, ChevronRight, SearchIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 
 interface EditFormOrderSectionProps {
@@ -51,11 +48,6 @@ export function EditOrderFormSectionOrder({
   onBack,
   onNext: onComplete,
 }: EditFormOrderSectionProps) {
-  const productsQuery = useQuery<Product[]>({
-    queryKey: ["products"],
-    queryFn: async () => (await axios.get("/api/products")).data.data,
-  });
-
   const [isSearchingCep, setIsSearchingCep] = useState(false);
 
   const searchZipCode = async (raw: string) => {
@@ -90,28 +82,11 @@ export function EditOrderFormSectionOrder({
     if (raw?.length === 8) searchZipCode(raw);
   };
 
-  const selectedProductSize = form.watch("productSize");
-
-  const products = useMemo(
-    () =>
-      (productsQuery.data || []).filter((p) => p.size === selectedProductSize),
-    [productsQuery.data, selectedProductSize],
-  );
-
-  const selectedProductId = form.watch("productId");
-
-  const productAmount = useMemo(() => {
-    const selectedProduct = products.find((p) => p.id === selectedProductId);
-    return selectedProduct ? Number(selectedProduct.amount).toFixed(2) : null;
-  }, [products, selectedProductId]);
-
   const onClickedNextButton = async () => {
     const isValidated = await form.trigger([
       "honoreeName",
       "tributeCardPhrase",
       "tributeCardType",
-      "productSize",
-      "productId",
       "supplierNote",
     ]);
     if (isValidated) onComplete();
@@ -188,87 +163,6 @@ export function EditOrderFormSectionOrder({
                 </FormItem>
               )}
             />
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <FormField
-              control={form.control}
-              name="productSize"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Tamanho do Produto <b className="text-red-600">*</b>
-                  </FormLabel>
-                  <Select
-                    onValueChange={(v) => {
-                      form.setValue("productId", "");
-                      field.onChange(v);
-                    }}
-                    value={field.value}
-                  >
-                    <FormControl className="w-full">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o tamanho..." />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value={ProductSize.DEFAULT}>
-                        Padrão
-                      </SelectItem>
-                      <SelectItem value={ProductSize.LARGE}>Grande</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="productId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Produto <b className="text-red-600">*</b>
-                  </FormLabel>
-                  <Combobox
-                    items={products}
-                    disabled={!selectedProductSize}
-                    itemToStringValue={(item: Product) => item.id}
-                    itemToStringLabel={(item: Product) => item.name}
-                    value={products.find((p) => p.id === field.value) || null}
-                    onValueChange={(product) => {
-                      if (!product) return;
-                      field.onChange(product.id);
-                    }}
-                  >
-                    <FormControl>
-                      <ComboboxInput placeholder="Selecione um produto" />
-                    </FormControl>
-                    <ComboboxContent>
-                      <ComboboxEmpty>Nenhum produto encontrado</ComboboxEmpty>
-                      <ComboboxList>
-                        {(product) => (
-                          <ComboboxItem key={product.id} value={product}>
-                            {product.name}
-                          </ComboboxItem>
-                        )}
-                      </ComboboxList>
-                    </ComboboxContent>
-                  </Combobox>
-                </FormItem>
-              )}
-            />
-
-            <FormItem>
-              <FormLabel>Valor do Produto</FormLabel>
-              <FormControl>
-                <Input
-                  type="text"
-                  disabled
-                  placeholder="R$ 0.00"
-                  value={productAmount ? "R$ " + productAmount : ""}
-                />
-              </FormControl>
-            </FormItem>
           </div>
 
           <FormField

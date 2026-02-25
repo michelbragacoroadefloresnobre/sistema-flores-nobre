@@ -1,10 +1,4 @@
-import {
-  City,
-  Contact,
-  Order,
-  Payment,
-  Product,
-} from "@/generated/prisma/client";
+import { City, Contact, Order, Payment } from "@/generated/prisma/client";
 import {
   PaymentStatus,
   PaymentType,
@@ -39,14 +33,12 @@ type NotifyPaymentParams = {
   payment: Payment;
   order: Order;
   customer: Contact;
-  product: Product;
 };
 
 export async function notifyPayment({
   payment,
   order,
   customer,
-  product,
 }: NotifyPaymentParams) {
   const formattedDate = DateTime.fromJSDate(order.deliveryUntil)
     .setZone(SP_TIMEZONE)
@@ -57,8 +49,6 @@ export async function notifyPayment({
     honoreeName: order.honoreeName,
     deliveryLocal: order.deliveryAddress,
     tributeCard: order.tributeCardPhrase,
-    product: product.name,
-    size: product.size,
   };
 
   if (

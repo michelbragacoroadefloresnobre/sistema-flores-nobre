@@ -1,4 +1,8 @@
-import { Role } from "@/generated/prisma/enums";
+import { ProductColor, ProductSize, Role } from "@/generated/prisma/enums";
+import {
+  PRODUCT_COLOR_MAP,
+  PRODUCT_SIZE_MAP,
+} from "@/modules/products/constants";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -204,4 +208,24 @@ export function validateEmail(email: string) {
 export function isValidUUID(id: string | undefined) {
   if (!id || id === "00000000-0000-0000-0000-000000000000") return false;
   return true;
+}
+
+export function formatBRL(value: number) {
+  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+export function getVariantLabel({
+  size,
+  color,
+}: {
+  size: ProductSize;
+  color: ProductColor;
+}) {
+  return size === ProductSize.UNIQUE && color === ProductColor.DEFAULT
+    ? `${PRODUCT_SIZE_MAP[size]}`
+    : size === ProductSize.UNIQUE
+      ? `${PRODUCT_COLOR_MAP[color]}`
+      : color === ProductColor.DEFAULT
+        ? `${PRODUCT_SIZE_MAP[size]}`
+        : `${PRODUCT_SIZE_MAP[size]} — ${PRODUCT_COLOR_MAP[color]}`;
 }

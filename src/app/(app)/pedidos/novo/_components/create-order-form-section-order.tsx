@@ -30,14 +30,11 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
-import { Product, ProductSize } from "@/generated/prisma/browser";
 import { UFS } from "@/lib/env";
-import { convertCurrencyInput, formatZipCodeInput } from "@/lib/utils";
+import { formatZipCodeInput } from "@/lib/utils";
 import { CreateOrderData } from "@/modules/orders/dtos/create-order.dto";
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import { ChevronLeft, ChevronRight, SearchIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 
 interface CreateFormOrderSectionProps {
@@ -51,11 +48,6 @@ export function CreateOrderFormSectionOrder({
   onBack,
   onNext: onComplete,
 }: CreateFormOrderSectionProps) {
-  const productsQuery = useQuery<Product[]>({
-    queryKey: ["products"],
-    queryFn: async () => (await axios.get("/api/products")).data.data,
-  });
-
   const [isSearchingCep, setIsSearchingCep] = useState(false);
 
   const searchZipCode = async (raw: string) => {
@@ -90,23 +82,19 @@ export function CreateOrderFormSectionOrder({
     if (raw?.length === 8) searchZipCode(raw);
   };
 
-  const selectedProductSize = form.watch("productSize");
-
-  const products = useMemo(
-    () =>
-      (productsQuery.data || []).filter((p) => p.size === selectedProductSize),
-    [productsQuery.data, selectedProductSize],
-  );
-
   const onClickedNextButton = async () => {
     const isValidated = await form.trigger([
       "honoreeName",
       "tributeCardPhrase",
       "tributeCardType",
-      "productSize",
-      "productId",
-      "amount",
       "supplierNote",
+      "deliveryZipCode",
+      "deliveryAddress",
+      "deliveryAddressNumber",
+      "deliveryAddressComplement",
+      "deliveryNeighboorhood",
+      "deliveryCity",
+      "deliveryUf",
     ]);
     if (isValidated) onComplete();
   };
@@ -116,7 +104,6 @@ export function CreateOrderFormSectionOrder({
   return (
     <div className="space-y-6">
       <CardContent className="space-y-6">
-        <p className="text-lg font-semibold">Pedido</p>
         <div className="grid gap-4">
           <FormField
             control={form.control}
@@ -136,26 +123,24 @@ export function CreateOrderFormSectionOrder({
             )}
           />
 
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="col-span-2">
-              <FormField
-                control={form.control}
-                name="tributeCardPhrase"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Cartão de Homenagem <b className="text-red-600">*</b>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Digite o cartão de homenagem"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
+          <div className="grid md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="tributeCardPhrase"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Cartão de Homenagem <b className="text-red-600">*</b>
+                  </FormLabel>
+                  <FormControl className="w-full">
+                    <Input
+                      {...field}
+                      placeholder="Digite o cartão de homenagem"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
@@ -179,101 +164,6 @@ export function CreateOrderFormSectionOrder({
                       <SelectItem value="PF">PF</SelectItem>
                     </SelectContent>
                   </Select>
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <FormField
-              control={form.control}
-              name="productSize"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Tamanho do Produto <b className="text-red-600">*</b>
-                  </FormLabel>
-                  <Select
-                    onValueChange={(v) => {
-                      form.setValue("productId", "");
-                      field.onChange(v);
-                    }}
-                    value={field.value}
-                  >
-                    <FormControl className="w-full">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o tamanho..." />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value={ProductSize.DEFAULT}>
-                        Padrão
-                      </SelectItem>
-                      <SelectItem value={ProductSize.LARGE}>Grande</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="productId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Produto <b className="text-red-600">*</b>
-                  </FormLabel>
-                  <Combobox
-                    items={products}
-                    disabled={!selectedProductSize}
-                    itemToStringValue={(item: Product) => item.id}
-                    itemToStringLabel={(item: Product) => item.name}
-                    value={products.find((p) => p.id === field.value) || null}
-                    onValueChange={(product) => {
-                      if (!product) return;
-                      form.setValue(
-                        "amount",
-                        Number(product.amount).toFixed(2),
-                      );
-                      field.onChange(product.id);
-                    }}
-                  >
-                    <FormControl>
-                      <ComboboxInput placeholder="Selecione um produto" />
-                    </FormControl>
-                    <ComboboxContent>
-                      <ComboboxEmpty>Nenhum produto encontrado</ComboboxEmpty>
-                      <ComboboxList>
-                        {(product) => (
-                          <ComboboxItem key={product.id} value={product}>
-                            {product.name}
-                          </ComboboxItem>
-                        )}
-                      </ComboboxList>
-                    </ComboboxContent>
-                  </Combobox>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Valor de Venda</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="text"
-                      placeholder="R$ 0.00"
-                      value={field.value ? "R$ " + field.value : ""}
-                      onChange={(e) => {
-                        const input = convertCurrencyInput(e.target.value);
-                        field.onChange(input);
-                      }}
-                    />
-                  </FormControl>
                 </FormItem>
               )}
             />

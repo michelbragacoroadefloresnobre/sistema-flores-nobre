@@ -4,10 +4,18 @@ import {
   PaymentStatus,
   PaymentType,
   PersonType,
-  ProductSize,
   UF,
 } from "@/generated/prisma/enums";
 import z from "zod";
+
+export const productItemSchema = z.object({
+  productId: z.string(),
+  variantId: z.string(),
+  productName: z.string(),
+  label: z.string(),
+  unitPrice: z.number(),
+  quantity: z.number(),
+});
 
 export const createOrderSchema = z.object({
   // Details
@@ -43,11 +51,6 @@ export const createOrderSchema = z.object({
   tributeCardType: z.enum(PersonType, {
     message: "Selecione se quem vai homenagear é PF ou PJ",
   }),
-  productSize: z.enum(ProductSize),
-  productId: z
-    .string({ message: "Produto é obrigatório" })
-    .min(1, "Produto é obrigatório!"),
-  amount: z.string(),
   supplierNote: z.string(),
   deliveryZipCode: z.string().min(1),
   deliveryAddress: z.string().min(1),
@@ -89,7 +92,10 @@ export const createOrderSchema = z.object({
   customerIbge: z.string().min(1),
   customerCity: z.string().min(1),
   customerUf: z.enum(UF),
+
+  productVariants: z.array(productItemSchema),
 });
 
 export type CreateOrderData = z.infer<typeof createOrderSchema>;
 export type CreateOrderFormSection = "Detalhes" | "Pedido" | "Contato";
+export type ProductItem = z.infer<typeof productItemSchema>;

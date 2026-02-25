@@ -39,21 +39,16 @@ import {
 } from "@/lib/utils";
 import { CreateOrderData } from "@/modules/orders/dtos/create-order.dto";
 import axios from "axios";
-import { ChevronLeft, ChevronRight, SearchIcon } from "lucide-react";
+import { ChevronLeft, SearchIcon } from "lucide-react";
 import { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 
 interface Props {
   form: UseFormReturn<CreateOrderData>;
   onBack: () => void;
-  isSubmitting: boolean;
 }
 
-export function EditOrderFormSectionContact({
-  form,
-  isSubmitting,
-  onBack,
-}: Props) {
+export function EditOrderFormSectionContact({ form, onBack }: Props) {
   const personType = form.watch("customerPersonType");
   const [isSearchingCep, setIsSearchingCep] = useState(false);
   const [isSearchingCnpj, setIsSearchingCnpj] = useState(false);
@@ -561,22 +556,6 @@ export function EditOrderFormSectionContact({
         <Button type="button" variant="outline" onClick={onBack}>
           <ChevronLeft className="mr-2 h-4 w-4" />
           Voltar
-        </Button>
-
-        <Button
-          type="submit"
-          disabled={isSearchingCep || isSearchingCnpj || isSubmitting}
-        >
-          {isSubmitting ? (
-            <>
-              <Spinner /> Salvando
-            </>
-          ) : (
-            <>
-              Concluir
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </>
-          )}
         </Button>
       </CardFooter>
     </div>

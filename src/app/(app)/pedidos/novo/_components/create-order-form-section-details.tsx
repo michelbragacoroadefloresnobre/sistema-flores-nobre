@@ -23,8 +23,6 @@ import {
   PaymentType,
   Role,
 } from "@/generated/prisma/enums";
-import { authClient } from "@/lib/auth/client";
-import { canPerformAction } from "@/lib/utils";
 import { CreateOrderData } from "@/modules/orders/dtos/create-order.dto";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
@@ -62,7 +60,7 @@ export function CreateOrderFormSectionDetails({
     if (isValidated) onNext();
   };
 
-  const { data: sessionData } = authClient.useSession();
+  // const { data: sessionData } = authClient.useSession();
 
   const { data: sellersData, isPending: isSellersDataPending } = useQuery<
     User[]
@@ -79,12 +77,11 @@ export function CreateOrderFormSectionDetails({
   const handleSelectedSeller = (v: string) => {
     form.setValue("sellerId", v);
   };
-  const isAdmin = canPerformAction([], sessionData?.user.role as any);
+  // const isAdmin = canPerformAction([], sessionData?.user.role as any);
 
   return (
     <div className="space-y-6">
       <CardContent className="space-y-6">
-        <p className="text-lg font-semibold">Detalhes</p>
         <div className="grid gap-4 gap-x-8 md:grid-cols-2">
           <FormField
             control={form.control}
@@ -399,10 +396,7 @@ export function CreateOrderFormSectionDetails({
         />
       </CardContent>
 
-      <CardFooter className="flex justify-between">
-        <Button type="button" disabled={true} variant="outline">
-          Voltar
-        </Button>
+      <CardFooter className="flex justify-end">
         <Button type="button" onClick={onComplete}>
           Próximo
           <ChevronRight className="ml-2 h-4 w-4" />

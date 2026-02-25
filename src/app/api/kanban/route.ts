@@ -6,27 +6,20 @@ import {
   getProducingOrders,
 } from "@/modules/orders/kanban.service";
 
-export const GET = createRoute(
-  async () => {
-    const [pending, producing, delivering] = await Promise.all([
-      getPendingOrders(),
-      getProducingOrders(),
-      getDeliveringOrders(),
-    ]);
+export const GET = createRoute(async () => {
+  const [pending, producing, delivering] = await Promise.all([
+    getPendingOrders(),
+    getProducingOrders(),
+    getDeliveringOrders(),
+  ]);
 
-    const groupedOrders: iKanbanOrders = {
-      pending,
-      producing,
-      delivering,
-    };
+  const groupedOrders: iKanbanOrders = {
+    pending,
+    producing,
+    delivering,
+  };
 
-    return {
-      data: groupedOrders,
-    };
-  },
-  {
-    logs: {
-      suppress: ["RESPONSE"],
-    },
-  },
-);
+  return {
+    data: groupedOrders,
+  };
+});

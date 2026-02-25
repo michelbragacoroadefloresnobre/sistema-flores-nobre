@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
-import { EditOrderForm } from "./_components/edit-order-form";
+import { serialize } from "@/lib/utils";
+import EditOrderScreen from "./_components/edit-order-screen";
 
 export default async function Page({
   params,
@@ -14,7 +15,7 @@ export default async function Page({
       form: true,
       contact: { include: { city: true } },
       city: true,
-      product: true,
+      orderProducts: true,
       payments: {
         orderBy: { createdAt: "desc" },
       },
@@ -29,5 +30,5 @@ export default async function Page({
     );
   }
 
-  return <EditOrderForm order={JSON.parse(JSON.stringify(order))} />;
+  return <EditOrderScreen order={serialize(order)} />;
 }

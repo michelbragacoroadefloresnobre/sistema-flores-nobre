@@ -31,19 +31,29 @@ model Contact {
 }
 
 model Product {
-  id        String            @id @default(cuid())
-  name      String            @db.VarChar(255)
-  amount    Decimal           @db.Decimal(10, 2)
-  size      ProductSize
-  height    String
-  width     String
-  imageUrl  String
-  orders    Order[]
-  suppliers ProductSupplier[]
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
+  id              String           @id @default(cuid())
+  name            String           @db.VarChar(255)
+  basePrice       Decimal          @db.Decimal(10, 2)
+  createdAt       DateTime         @default(now())
+  productVariants ProductVariant[]
 
   @@map("product")
+}
+
+model ProductVariant {
+  id               String            @id @default(cuid())
+  active           Boolean
+  productId        String
+  product          Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  color            ProductColor
+  size             ProductSize
+  price            Decimal?          @db.Decimal(10, 2)
+  imageUrl         String
+  createdAt        DateTime          @default(now())
+  orderProducts    OrderProduct[]
+  productSuppliers ProductSupplier[]
+
+  @@map("product_variant")
 }
 
 model Supplier {
@@ -88,14 +98,14 @@ model CoverageArea {
 }
 
 model ProductSupplier {
-  amount     Decimal? @db.Decimal(10, 2)
+  amount     Decimal?       @db.Decimal(10, 2)
   rating     Int
   supplierId String
-  productId  String
-  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
-  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId  String
+  supplier   Supplier       @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  variant    ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
-  @@id([supplierId, productId])
+  @@id([supplierId, variantId])
   @@map("product_supplier")
 }
 
@@ -141,8 +151,6 @@ model Order {
   deliveryNeighboorhood     String
   ibge                      String
   city                      City            @relation(fields: [ibge], references: [ibge])
-  productId                 String
-  product                   Product         @relation(fields: [productId], references: [id])
   supplierNote              String
   contactId                 String
   contact                   Contact         @relation(fields: [contactId], references: [id])
@@ -151,8 +159,18 @@ model Order {
   createdAt                 DateTime        @default(now())
   updatedAt                 DateTime        @updatedAt
   auditLogs                 AuditLog[]
+  orderProducts             OrderProduct[]
 
   @@map("order")
+}
+
+model OrderProduct {
+  orderId   String
+  order     Order          @relation(fields: [orderId], references: [id])
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+
+  @@unique([orderId, variantId])
 }
 
 model Form {
@@ -349,8 +367,25 @@ enum PaymentStatus {
 }
 
 enum ProductSize {
-  DEFAULT
+  UNIQUE
+  SMALL
+  MEDIUM
   LARGE
+}
+
+enum ProductColor {
+  DEFAULT
+  YELLOW
+  BLUE
+  WHITE
+  CHAMPAGNE
+  MULTICOLOR
+  ORANGE
+  LILAC
+  PINK
+  ROSE
+  PURPLE
+  RED
 }
 
 enum DeliveryPeriod {

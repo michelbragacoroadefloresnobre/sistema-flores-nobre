@@ -39,45 +39,19 @@ import {
 } from "@/lib/utils";
 import { CreateOrderData } from "@/modules/orders/dtos/create-order.dto";
 import axios from "axios";
-import { ChevronLeft, ChevronRight, SearchIcon } from "lucide-react";
+import { ChevronLeft, SearchIcon } from "lucide-react";
 import { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 
 interface Props {
   form: UseFormReturn<CreateOrderData>;
   onBack: () => void;
-  isSubmitting: boolean;
 }
 
-export function CreateOrderFormSectionCustomer({
-  form,
-  isSubmitting,
-  onBack,
-}: Props) {
+export function CreateOrderFormSectionCustomer({ form, onBack }: Props) {
   const personType = form.watch("customerPersonType");
   const [isSearchingCep, setIsSearchingCep] = useState(false);
   const [isSearchingCnpj, setIsSearchingCnpj] = useState(false);
-
-  // const onComplete = async () => {
-  //   const isValidated = await form.trigger([
-  //     "customerName",
-  //     "customerEmail",
-  //     "customerPhone",
-  //     "customerLegalName",
-  //     "customerIe",
-  //     "customerTaxId",
-  //     "customerPersonType",
-  //     "needInvoice",
-  //     "customerZipCode",
-  //     "customerAddress",
-  //     "customerAddressNumber",
-  //     "customerAddressComplement",
-  //     "customerNeighboorhood",
-  //     "customerCity",
-  //     "customerUf",
-  //   ]);
-  //   if (isValidated) onNext();
-  // };
 
   const handleTipoPessoaChange = (value: string) => {
     form.setValue("customerTaxId", "");
@@ -168,7 +142,6 @@ export function CreateOrderFormSectionCustomer({
   return (
     <div className="space-y-6">
       <CardContent className="space-y-6">
-        <p className="text-lg font-semibold">Cliente</p>
         <div className="grid gap-4">
           <div className="grid gap-4 md:grid-cols-2">
             <FormField
@@ -561,22 +534,6 @@ export function CreateOrderFormSectionCustomer({
         <Button type="button" variant="outline" onClick={onBack}>
           <ChevronLeft className="mr-2 h-4 w-4" />
           Voltar
-        </Button>
-
-        <Button
-          type="submit"
-          disabled={isSearchingCep || isSearchingCnpj || isSubmitting}
-        >
-          {isSubmitting ? (
-            <>
-              <Spinner /> Salvando
-            </>
-          ) : (
-            <>
-              Concluir
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </>
-          )}
         </Button>
       </CardFooter>
     </div>

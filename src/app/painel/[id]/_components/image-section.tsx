@@ -29,17 +29,44 @@ export function ImageSection({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (!selectedFile) return;
+    let file = e.target.files?.[0];
+    if (!file) return;
 
-    if (!selectedFile.type.startsWith("image/")) {
-      toast.error("Por favor, selecione apenas arquivos de imagem.");
-      return;
+    try {
+      const allowedImageTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/heic",
+        "image/heif",
+      ];
+
+      if (
+        !file.type &&
+        (file.name.toLowerCase().endsWith(".heic") ||
+          file.name.toLowerCase().endsWith(".heif"))
+      )
+        file = new File([file], file.name, {
+          type: file.name.toLowerCase().endsWith(".heic")
+            ? "image/heic"
+            : "image/heif",
+        });
+
+      const MAX_SIZE_MB = 10;
+      const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+
+      if (!allowedImageTypes.includes(file.type))
+        return toast.error("Formato de arquivo incompatível");
+      else if (file.size > MAX_SIZE_BYTES)
+        return toast.error("Tamanho máximo de imagem permitido é 10MB");
+      setFile(file);
+
+      const imageUrl = URL.createObjectURL(file);
+      setPreviewUrl(imageUrl);
+    } catch (e: any) {
+      console.error("Erro ao selecionar foto:", e);
+      toast.error(e?.message || "Imagem invalido para envio");
     }
-
-    const url = URL.createObjectURL(selectedFile);
-    setFile(selectedFile);
-    setPreviewUrl(url);
   };
 
   const handleRemoveFile = () => {

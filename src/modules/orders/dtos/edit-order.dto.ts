@@ -2,10 +2,17 @@ import {
   ContactOrigin,
   DeliveryPeriod,
   PersonType,
-  ProductSize,
   UF,
 } from "@/generated/prisma/enums";
 import z from "zod";
+
+export const productItemSchema = z.object({
+  productId: z.string(),
+  variantId: z.string(),
+  productName: z.string(),
+  label: z.string(),
+  quantity: z.number(),
+});
 
 export const editOrderSchema = z.object({
   // Details
@@ -32,10 +39,6 @@ export const editOrderSchema = z.object({
   tributeCardType: z.enum(PersonType, {
     message: "Selecione se quem vai homenagear é PF ou PJ",
   }),
-  productSize: z.enum(ProductSize),
-  productId: z
-    .string({ message: "Produto é obrigatório" })
-    .min(1, "Produto é obrigatório!"),
   supplierNote: z.string(),
   deliveryZipCode: z.string().min(1),
   deliveryAddress: z.string().min(1),
@@ -77,6 +80,8 @@ export const editOrderSchema = z.object({
   customerIbge: z.string().min(1),
   customerCity: z.string().min(1),
   customerUf: z.enum(UF),
+
+  productVariants: z.array(productItemSchema),
 });
 
 export type EditOrderData = z.infer<typeof editOrderSchema>;

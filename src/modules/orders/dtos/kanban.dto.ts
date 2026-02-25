@@ -18,7 +18,6 @@ export interface iOrderPending {
   orderStatus: OrderStatus;
   customerName: string;
   customerPhone: string;
-  productName: string;
   amount: number;
   isPaid: boolean;
   hasRefunded: boolean;
@@ -36,7 +35,6 @@ export interface iOrderProducing {
   orderStatus: OrderStatus;
   customerName: string;
   customerPhone: string;
-  productName: string;
   amount: number;
   isPaid: boolean;
   hasRefunded: boolean;
@@ -54,7 +52,6 @@ export interface iOrderDelivering {
   orderStatus: OrderStatus;
   customerName: string;
   customerPhone: string;
-  productName: string;
   amount: number;
   isPaid: boolean;
   hasRefunded: boolean;

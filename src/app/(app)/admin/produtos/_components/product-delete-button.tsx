@@ -48,7 +48,7 @@ export function ProductDeleteButton({ productId }: { productId: string }) {
       <AlertDialogTrigger asChild>
         <Button
           variant="ghost"
-          size="sm"
+          size="icon"
           className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
         >
           <Trash2 className="size-4" />

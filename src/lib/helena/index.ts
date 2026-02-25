@@ -207,8 +207,6 @@ export const buildLinkPaymentMessage = (data: {
   deliveryLocal: string;
   deliveryHour: string;
   tributeCard: string | null;
-  product: string;
-  size: string;
 }) => {
   let message = `
 PEDIDO 📦 #NOBRE${data.orderId}
@@ -224,12 +222,6 @@ PEDIDO 📦 #NOBRE${data.orderId}
 
 📩 Cartão de Homenagem: 
 *${data.tributeCard}*
-
-🌹 Produto: 
-*${data.product}*
-
-↔️ Tamanho:
-*${data.size}*
 `;
   if (data.payment) {
     message += `

@@ -146,7 +146,6 @@ export const POST = createRoute(
           honoreeName: body.honoreeName,
           tributeCardPhrase: body.tributeCardPhrase,
           tributeCardType: body.tributeCardType,
-          productId: body.productId,
           supplierNote: body.supplierNote,
           contactId: contact.id,
           deliveryAddress: body.deliveryAddress,
@@ -163,14 +162,25 @@ export const POST = createRoute(
               description: "Pedido formalizado pelo vendedor",
             },
           },
+          orderProducts: {
+            createMany: {
+              data: body.productVariants.map((pv) => ({
+                variantId: pv.variantId,
+              })),
+            },
+          },
         },
-        include: { product: true },
       });
 
       const { payment } = await createPayment({
         tx,
         body: {
-          amount: body.amount,
+          amount: body.productVariants
+            .reduce(
+              (amount, item) => item.unitPrice * item.quantity + amount,
+              0,
+            )
+            .toFixed(2),
           type: body.paymentType,
           orderId: order.id,
           status: body.paymentStatus,
@@ -178,7 +188,7 @@ export const POST = createRoute(
             body.paymentType === PaymentType.BOLETO
               ? body.boletoDue
               : undefined,
-          productName: order.product.name,
+          productName: `Pedido #NOBRE${order.id}`,
         },
         customer: contact,
         city: customerCity,
@@ -192,7 +202,6 @@ export const POST = createRoute(
         payment,
         order,
         customer: contact!,
-        product: order.product,
       });
     } catch (e) {
       console.error("Erro ao enviar mensagem para o cliente:", e);

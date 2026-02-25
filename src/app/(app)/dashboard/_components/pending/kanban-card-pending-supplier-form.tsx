@@ -63,7 +63,7 @@ export function KanbanCardPendingSupplierForm({
   });
 
   const { isPending, data, error } = useQuery({
-    queryKey: ["available-suppliers", order.productName, order.deliveryZipCode],
+    queryKey: ["available-suppliers", order.id],
     queryFn: async () => {
       const res = await axios.get<{
         data: Prisma.SupplierGetPayload<{

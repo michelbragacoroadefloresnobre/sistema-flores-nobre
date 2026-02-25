@@ -5,16 +5,55 @@ import createHttpError from "http-errors";
 
 export const PUT = createRoute(
   async (req, { body, params }) => {
-    await prisma.product.update({
-      where: { id: params?.id },
-      data: {
-        name: body.name,
-        amount: body.amount,
-        size: body.size,
-        width: body.width,
-        height: body.height,
-        imageUrl: body.imageUrl,
-      },
+    if (body.variations.length === 0)
+      throw new createHttpError.BadRequest("Especifique ao menos 1 variante");
+
+    await prisma.$transaction(async (tx) => {
+      const existingVariants = await tx.productVariant.findMany({
+        where: { productId: params.id },
+        select: { id: true, size: true, color: true },
+      });
+
+      await tx.productVariant.updateMany({
+        where: { productId: params.id },
+        data: { active: false },
+      });
+
+      for (const pv of body.variations) {
+        const matchedVariant = existingVariants.find(
+          (ev) => ev.size === pv.size && ev.color === pv.color,
+        );
+
+        if (matchedVariant) {
+          await tx.productVariant.update({
+            where: { id: matchedVariant.id },
+            data: {
+              active: true,
+              imageUrl: pv.imageUrl,
+              price: pv.price || undefined,
+            },
+          });
+        } else {
+          await tx.productVariant.create({
+            data: {
+              productId: params.id,
+              color: pv.color,
+              size: pv.size,
+              imageUrl: pv.imageUrl,
+              price: pv.price || undefined,
+              active: true,
+            },
+          });
+        }
+      }
+
+      await tx.product.update({
+        where: { id: params.id },
+        data: {
+          name: body.name,
+          basePrice: body.basePrice,
+        },
+      });
     });
 
     return "Produto editado com sucesso";
@@ -26,7 +65,15 @@ export const PUT = createRoute(
 
 export const DELETE = createRoute(async (req, { params }) => {
   const count = await prisma.order.count({
-    where: { productId: params.id },
+    where: {
+      orderProducts: {
+        some: {
+          variant: {
+            productId: params.id,
+          },
+        },
+      },
+    },
   });
 
   if (count)

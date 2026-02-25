@@ -1,0 +1,44 @@
+import { PaymentStatus } from "@/generated/prisma/enums";
+import { env } from "@/lib/env";
+import { createRoute } from "@/lib/handler/route-handler";
+import prisma from "@/lib/prisma";
+import createHttpError from "http-errors";
+import z from "zod";
+
+export const POST = createRoute(
+  async (req, { body }) => {
+    const imageUrl = `https://${env.S3_BUCKET_NAME}.s3.${env.AWS_REGION}.amazonaws.com/${body.fileKey}`;
+    const fileUrlResponse = await fetch(imageUrl);
+
+    const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
+
+    const contentType = fileUrlResponse.headers.get("Content-Type") || "";
+
+    if (!allowedImageTypes.includes(contentType))
+      throw new createHttpError.BadRequest("Formato de imagem incompativel");
+
+    const { count } = await prisma.payment.updateMany({
+      data: {
+        proofOfPaymentUrl: imageUrl,
+        status: PaymentStatus.PAID,
+        paidAt: new Date(),
+      },
+      where: {
+        proofOfPaymentUrl: null,
+        status: PaymentStatus.ACTIVE,
+      },
+    });
+
+    if (!count)
+      throw new createHttpError.BadRequest(
+        "Envio de foto indisponivel para este pagamento",
+      );
+
+    return "Foto enviada com sucesso";
+  },
+  {
+    body: z.object({
+      fileKey: z.string().min(1),
+    }),
+  },
+);

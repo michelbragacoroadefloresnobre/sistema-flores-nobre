@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,7 +34,6 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import Image from "next/image";
 import { useState } from "react";
 import Dropzone from "react-dropzone";
 import { toast } from "sonner";
@@ -57,15 +57,29 @@ export function PaymentsSectionActionButtons({
   const SubmitProofOfPaymentButton = () => {
     const [isUploading, setIsUploading] = useState<boolean>(false);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [imageFile, setImageFile] = useState<File | null>(null);
 
     if (payment.type !== PaymentType.PIX_CNPJ) return;
 
     const processFile = (file: File) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
+
+        const MAX_SIZE_MB = 10;
+        const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+
+        if (!allowedImageTypes.includes(file.type))
+          return toast.error("Formato de arquivo incompatível");
+        else if (file.size > MAX_SIZE_BYTES)
+          return toast.error("Tamanho máximo de imagem permitido é 10MB");
+        setImageFile(file);
+
+        const imageUrl = URL.createObjectURL(file);
+        setImagePreview(imageUrl);
+      } catch (e: any) {
+        console.error("Erro ao selecionar foto:", e);
+        toast.error(e?.message || "Imagem invalido para envio");
+      }
     };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,12 +96,25 @@ export function PaymentsSectionActionButtons({
     };
 
     const handleConfirm = async () => {
-      if (!imagePreview) return;
+      if (!imagePreview || !imageFile) return;
       setIsUploading(true);
+
       try {
+        const { uploadUrl, key } = await axios
+          .post("/api/upload-url", {
+            fileName: `${imageFile.name}`,
+            path: "/proof-of-payment",
+            contentType: imageFile.type,
+          })
+          .then((r) => r.data);
+
+        await axios.put(uploadUrl, imageFile, {
+          headers: { "Content-Type": imageFile.type },
+        });
+
         const { message } = await axios
           .post(`/api/payments/${payment.id}/proof-of-payment`, {
-            imagePreview,
+            fileKey: key,
           })
           .then((res) => res.data);
 
@@ -137,11 +164,9 @@ export function PaymentsSectionActionButtons({
             <div className="flex flex-col items-center justify-center">
               {image ? (
                 <div className="relative w-full">
-                  <Image
+                  <img
                     src={image}
                     alt="Preview"
-                    width={200}
-                    height={200}
                     className="w-full aspect-square object-cover rounded-lg border"
                   />
                   {!payment.proofOfPaymentUrl && (

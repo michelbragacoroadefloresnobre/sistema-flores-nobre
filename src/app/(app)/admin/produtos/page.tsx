@@ -10,20 +10,11 @@ import {
 } from "@/components/ui/table";
 import prisma from "@/lib/prisma";
 import { serialize } from "@/lib/utils";
-import { productSizeName } from "@/modules/products/product.mapper";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Edit, Plus } from "lucide-react";
 import Link from "next/link";
 import { ProductDeleteButton } from "./_components/product-delete-button";
-import { ProductDialog } from "./_components/product-form";
 
 export const revalidate = 0;
-
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
-};
 
 interface ProductsPageProps {
   searchParams: Promise<any>;
@@ -42,11 +33,16 @@ export default async function ProductsPage({
       orderBy: { name: "asc" },
       take: PAGE_SIZE,
       skip: skip,
+      include: {
+        _count: {
+          select: { productVariants: { where: { active: true } } },
+        },
+      },
     }),
     prisma.product.count(),
   ]);
 
-  const products = serialize(productsRes);
+  const products = serialize(productsRes) as typeof productsRes;
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
   const hasPrev = currentPage > 1;
@@ -64,7 +60,11 @@ export default async function ProductsPage({
           </p>
         </div>
 
-        <ProductDialog />
+        <Button asChild>
+          <Link href={"/admin/produtos/novo"}>
+            <Plus className="mr-2 size-4" /> Criar Produto
+          </Link>
+        </Button>
       </div>
 
       <Card className="overflow-hidden border-border">
@@ -76,10 +76,7 @@ export default async function ProductsPage({
                   Nome
                 </TableHead>
                 <TableHead className="text-foreground font-semibold">
-                  Tamanho
-                </TableHead>
-                <TableHead className="text-foreground font-semibold">
-                  Valor
+                  Variações
                 </TableHead>
                 <TableHead className="text-right text-foreground font-semibold pr-6">
                   Ações
@@ -95,16 +92,23 @@ export default async function ProductsPage({
                   <TableCell className="font-medium text-foreground pl-6">
                     {product.name}
                   </TableCell>
-                  <TableCell>
-                    <span className="inline-flex items-center rounded-md bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">
-                      {productSizeName[product.size]}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground font-mono">
-                    {formatCurrency(Number(product.amount))}
+                  <TableCell className="font-medium">
+                    {product._count.productVariants}{" "}
+                    {product._count.productVariants > 1
+                      ? "variações"
+                      : "variação"}
                   </TableCell>
                   <TableCell className="text-right pr-4">
-                    <ProductDialog product={product} />
+                    <Button
+                      size={"icon"}
+                      variant={"ghost"}
+                      className="text-muted-foreground"
+                      asChild
+                    >
+                      <Link href={`/admin/produtos/${product.id}`}>
+                        <Edit className="size-4" />
+                      </Link>
+                    </Button>
                     <ProductDeleteButton productId={product.id} />
                   </TableCell>
                 </TableRow>

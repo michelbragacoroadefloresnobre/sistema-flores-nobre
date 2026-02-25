@@ -33,7 +33,6 @@ interface RouteOptions<B, Q> {
   public?: boolean;
   body?: ZodSchema<B>;
   searchParams?: ZodSchema<Q>;
-  logs?: { suppress?: "RESPONSE"[] };
 }
 
 export function createRoute<B = any, Q = any>(
@@ -56,7 +55,6 @@ export function createRoute<B = any, Q = any>(
 
       if (options.body && req.method !== "GET") {
         const json = await req.json();
-        console.log(`[RequestBody]`, JSON.stringify(json, null, 2));
         parsedBody = await options.body.parseAsync(json);
       }
 
@@ -90,11 +88,7 @@ export function createRoute<B = any, Q = any>(
         };
       }
 
-      if (
-        process.env.NODE_ENV === "development" &&
-        !options.logs?.suppress?.includes("RESPONSE")
-      )
-        console.log(`[ResponseBody] ${JSON.stringify(responseData, null, 2)}`);
+      // console.log(`[ResponseBody] ${JSON.stringify(responseData, null, 2)}`);
 
       return NextResponse.json(responseData, {
         status: req.method === "POST" ? 201 : 200,

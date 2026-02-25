@@ -1,6 +1,7 @@
 import { ProductSize } from "@/generated/prisma/enums";
 
 export const productSizeName = {
-  [ProductSize.DEFAULT]: "Padrão",
+  [ProductSize.SMALL]: "Padrão",
+  [ProductSize.MEDIUM]: "Médio",
   [ProductSize.LARGE]: "Grande",
 };

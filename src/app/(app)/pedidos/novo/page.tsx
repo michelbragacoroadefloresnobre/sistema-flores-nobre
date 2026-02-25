@@ -4,7 +4,7 @@ import { QueryFormType } from "@/app/api/forms/query-form.dto.";
 import { cn } from "@/lib/utils";
 import { FileText, Plus, Search } from "lucide-react";
 import { useState } from "react";
-import { CreateOrderForm } from "./_components/create-order-form";
+import CreateOrder from "./_components/create-order-screen";
 import { SearchOrderForm } from "./_components/search-form";
 
 type TabType = "criar" | "consultar";
@@ -19,7 +19,7 @@ export default function QueryPage() {
   if (page === "create_order_page") {
     return (
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <CreateOrderForm phone={formData?.phone} serverData={formData?.data} />
+        <CreateOrder phone={formData?.phone} serverData={formData?.data} />
       </div>
     );
   }
@@ -75,14 +75,12 @@ export default function QueryPage() {
                     </div>
                   </div>
 
-                  {/* {!formData?.active && ( */}
                   <SearchOrderForm
                     onSuccess={(data, phone) => {
                       setPage("create_order_page");
                       setFormData({ data, phone });
                     }}
                   />
-                  {/* )} */}
                 </div>
               </div>
             </div>
