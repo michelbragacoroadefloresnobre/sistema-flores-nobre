@@ -7,6 +7,17 @@ const dayScheduleSchema = z.object({
   closeTime: z.string().optional(),
 });
 
+export const supplierProductSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  sizeOptions: z.array(
+    z.object({
+      size: z.enum(ProductSize),
+      amount: z.string(),
+    }),
+  ),
+});
+
 const cnpjRegex = /^\d{14}$/;
 
 export const supplierFormSchema = z
@@ -36,25 +47,8 @@ export const supplierFormSchema = z
       )
       .min(1, "Cadastre pelo menos uma região"),
     products: z
-      .array(
-        z.object({
-          id: z.string(),
-          name: z.string(),
-          size: z.enum(ProductSize),
-          amount: z.string(),
-          rating: z.number().min(0).max(5).optional(),
-        }),
-      )
+      .array(supplierProductSchema)
       .min(1, "Selecione pelo menos um produto"),
-    // weekHours: z.object({
-    //   [WeekDay.MONDAY]: dayScheduleSchema,
-    //   [WeekDay.TUESDAY]: dayScheduleSchema,
-    //   [WeekDay.WEDNESDAY]: dayScheduleSchema,
-    //   [WeekDay.THURSDAY]: dayScheduleSchema,
-    //   [WeekDay.FRIDAY]: dayScheduleSchema,
-    //   [WeekDay.SATURDAY]: dayScheduleSchema,
-    //   [WeekDay.SUNDAY]: dayScheduleSchema,
-    // }),
   })
   .refine(
     (data) => {
@@ -70,3 +64,4 @@ export const supplierFormSchema = z
   );
 
 export type SupplierFormData = z.infer<typeof supplierFormSchema>;
+export type SupplierProductFormData = z.infer<typeof supplierProductSchema>;

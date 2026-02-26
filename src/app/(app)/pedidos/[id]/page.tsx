@@ -15,7 +15,11 @@ export default async function Page({
       form: true,
       contact: { include: { city: true } },
       city: true,
-      orderProducts: true,
+      orderProducts: {
+        include: {
+          variant: { include: { product: { select: { name: true } } } },
+        },
+      },
       payments: {
         orderBy: { createdAt: "desc" },
       },

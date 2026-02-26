@@ -2,9 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { Prisma } from "@/generated/prisma/browser";
+import { Spinner } from "@/components/ui/spinner";
+import { OrderStatus, Prisma } from "@/generated/prisma/browser";
+import { getVariantLabel } from "@/lib/utils";
 import { KANBAN_QUERY_KEY } from "@/modules/orders/constants";
-import { CreateOrderData } from "@/modules/orders/dtos/create-order.dto";
 import {
   EditOrderData,
   editOrderSchema,
@@ -15,9 +16,13 @@ import axios from "axios";
 import { format } from "date-fns";
 import { ClipboardList, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { OrderSummarySection } from "../../_components/order-summary-section";
 import { ProductSelectionSection } from "../../_components/product-selection-section";
+import { EditOrderForm } from "./edit-order-form";
+import { PaymentsSection } from "./payments-section";
 
 interface Props {
   order: Prisma.OrderGetPayload<{
@@ -26,6 +31,11 @@ interface Props {
       city: true;
       product: true;
       payments: true;
+      orderProducts: {
+        include: {
+          variant: { include: { product: { select: { name: true } } } };
+        };
+      };
     };
   }>;
 }
@@ -80,7 +90,24 @@ const EditOrderScreen = ({ order }: Props) => {
       customerCity: order.contact.city.name || "",
       customerUf: order.contact.city.uf || ("" as any),
 
-      productVariants: [],
+      productVariants: Object.values(
+        order.orderProducts.reduce((acc, or) => {
+          if (acc[or.variantId]) acc[or.variantId].quantity += 1;
+          else
+            acc[or.variantId] = {
+              quantity: 1,
+              productId: or.variant.productId,
+              productName: or.variant.product.name,
+              variantId: or.variantId,
+              label: getVariantLabel({
+                color: or.variant.color,
+                size: or.variant.size,
+              }),
+            };
+
+          return acc;
+        }, {}),
+      ),
     },
   });
 
@@ -89,14 +116,23 @@ const EditOrderScreen = ({ order }: Props) => {
     name: "productVariants",
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const onSubmit = async (data: CreateOrderData) => {
+  const onSubmit = async () => {
+    const isApproved = await form.trigger();
+
+    if (!isApproved) return;
+    const data = form.getValues();
+
     if (data.productVariants.length === 0) {
       toast.error("Adicione pelo menos um item ao pedido.");
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       const { message } = await axios
@@ -108,24 +144,55 @@ const EditOrderScreen = ({ order }: Props) => {
       router.push("/dashboard");
     } catch (e: any) {
       toast.error(e.response?.data.error || "Erro ao salvar pedido");
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  const hasSupplier =
+    order.orderStatus === OrderStatus.PRODUCING_PREPARATION ||
+    order.orderStatus === OrderStatus.PRODUCING_CONFIRMATION ||
+    order.orderStatus === OrderStatus.DELIVERING_ON_ROUTE ||
+    order.orderStatus === OrderStatus.DELIVERING_DELIVERED ||
+    order.orderStatus === OrderStatus.FINALIZED;
 
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-3/4 px-4 py-10 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8 flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
-            <ClipboardList className="h-5 w-5 text-primary" />
+        <div className="mb-8 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
+              <ClipboardList className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight font-display text-foreground">
+                Novo Pedido
+              </h1>
+              <p className="text-sm text-muted-foreground font-body">
+                Selecione produtos, preencha os dados e finalize
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight font-display text-foreground">
-              Novo Pedido
-            </h1>
-            <p className="text-sm text-muted-foreground font-body">
-              Selecione produtos, preencha os dados e finalize
-            </p>
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <Button
+              type="submit"
+              className="gap-2 font-body"
+              disabled={isSubmitting}
+              onClick={onSubmit}
+            >
+              {isSubmitting ? (
+                <>
+                  <Spinner className="h-4 w-4" />
+                  Salvando Pedido...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4" />
+                  Salvar Pedido
+                </>
+              )}
+            </Button>
           </div>
         </div>
 
@@ -133,7 +200,8 @@ const EditOrderScreen = ({ order }: Props) => {
           {/* LEFT COLUMN — Product Search */}
           <div className="lg:col-span-2 space-y-4">
             <ProductSelectionSection
-              value={products}
+              hasSupplier={hasSupplier}
+              value={products as any}
               onChange={(v) => replaceProducts(v)}
             />
           </div>
@@ -145,19 +213,16 @@ const EditOrderScreen = ({ order }: Props) => {
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-6"
               >
-                {/* <OrderSummarySection
-                  value={products}
+                <OrderSummarySection
+                  value={products as any}
+                  hasSupplier={hasSupplier}
+                  hidePricing={true}
                   onChange={(v) => replaceProducts(v)}
-                /> */}
+                />
 
-                {/* <CreateOrderForm form={form} /> */}
+                <EditOrderForm form={form} />
 
-                <div className="flex items-center justify-end gap-3 pt-2">
-                  <Button type="submit" className="gap-2 font-body">
-                    <Send className="h-4 w-4" />
-                    Finalizar Pedido
-                  </Button>
-                </div>
+                <PaymentsSection orderId={order.id} data={order.payments} />
               </form>
             </Form>
           </div>

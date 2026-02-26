@@ -1,6 +1,7 @@
 import { QueryFormType } from "@/app/api/forms/query-form.dto.";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
+import { Spinner } from "@/components/ui/spinner";
 import { PaymentStatus } from "@/generated/prisma/enums";
 import { authClient } from "@/lib/auth/client";
 import { KANBAN_QUERY_KEY } from "@/modules/orders/constants";
@@ -13,11 +14,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { ClipboardList, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { OrderSummarySection } from "../../_components/order-summary-section";
 import { ProductSelectionSection } from "../../_components/product-selection-section";
 import { CreateOrderForm } from "./create-order-form";
-import { OrderSummarySection } from "./order-summary-section";
 
 interface Props {
   serverData: QueryFormType | undefined;
@@ -83,6 +85,8 @@ const CreateOrder = ({ serverData, phone }: Props) => {
     name: "productVariants",
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -91,6 +95,8 @@ const CreateOrder = ({ serverData, phone }: Props) => {
       toast.error("Adicione pelo menos um item ao pedido.");
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       const { message } = await axios
@@ -102,6 +108,8 @@ const CreateOrder = ({ serverData, phone }: Props) => {
       router.push("/dashboard");
     } catch (e: any) {
       toast.error(e.response?.data.error || "Erro ao salvar pedido");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -147,9 +155,22 @@ const CreateOrder = ({ serverData, phone }: Props) => {
                 <CreateOrderForm form={form} />
 
                 <div className="flex items-center justify-end gap-3 pt-2">
-                  <Button type="submit" className="gap-2 font-body">
-                    <Send className="h-4 w-4" />
-                    Finalizar Pedido
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="gap-2 font-body"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Spinner className="h-4 w-4" />
+                        Finalizando Pedido...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4" />
+                        Finalizar Pedido
+                      </>
+                    )}
                   </Button>
                 </div>
               </form>

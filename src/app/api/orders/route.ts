@@ -164,9 +164,11 @@ export const POST = createRoute(
           },
           orderProducts: {
             createMany: {
-              data: body.productVariants.map((pv) => ({
-                variantId: pv.variantId,
-              })),
+              data: body.productVariants.flatMap((pv) =>
+                Array.from({ length: pv.quantity }).map(() => ({
+                  variantId: pv.variantId,
+                })),
+              ),
             },
           },
         },

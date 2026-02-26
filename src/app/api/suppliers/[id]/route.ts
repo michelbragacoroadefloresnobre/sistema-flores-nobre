@@ -25,11 +25,15 @@ export const PUT = createRoute(
         jid: body.isRatified ? body.groupId : undefined,
         isRatified: body.isRatified,
         products: {
-          create: body.products.map((p) => ({
-            productId: p.id,
-            amount: Number(p.amount) || undefined,
-            rating: p.rating || 0,
-          })),
+          createMany: {
+            data: body.products.flatMap((p) =>
+              p.sizeOptions.map((so) => ({
+                productId: p.id,
+                size: so.size,
+                amount: Number(so.amount) || undefined,
+              })),
+            ),
+          },
         },
         coverageAreas: {
           create: body.regions.map((r) => ({

@@ -13,6 +13,7 @@ import { Prisma } from "@/generated/prisma/client";
 import {
   SupplierFormData,
   supplierFormSchema,
+  SupplierProductFormData,
 } from "@/modules/suppliers/dtos/supplier-form.dto";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
@@ -27,6 +28,7 @@ import { SupplierFormSummary } from "../_components/supplier-form-summary";
 
 const EditSupplierPàge = ({
   supplier,
+  supplierProducts,
 }: {
   supplier: Prisma.SupplierGetPayload<{
     include: {
@@ -34,6 +36,7 @@ const EditSupplierPàge = ({
       products: { include: { product: true } };
     };
   }>;
+  supplierProducts: SupplierProductFormData[];
 }) => {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -52,13 +55,7 @@ const EditSupplierPàge = ({
         zipCodeEnd: String(area.end).padStart(8, "0"),
         freight: area.freight ? Number(area.freight).toFixed(2) : "",
       })),
-      products: supplier.products.map((p) => ({
-        id: p.productId,
-        amount: p.amount ? Number(p.amount).toFixed(2) : "",
-        name: p.product.name,
-        rating: p.rating,
-        size: p.product.size,
-      })),
+      products: supplierProducts,
     },
   });
 

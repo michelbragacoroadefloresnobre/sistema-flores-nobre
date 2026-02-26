@@ -11,8 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { StarRating } from "@/components/ui/star-rating";
-import { Product } from "@/generated/prisma/client";
-import { productSizeName } from "@/modules/products/product.mapper";
+import { Prisma } from "@/generated/prisma/browser";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { Search } from "lucide-react";
@@ -39,7 +38,13 @@ export const ProductSelectionModal = ({
 
   const [defaultRating, setDefaultRating] = useState<number>(0);
 
-  const productsQuery = useQuery<Product[]>({
+  const productsQuery = useQuery<
+    Prisma.ProductGetPayload<{
+      include: {
+        productVariants: true;
+      };
+    }>[]
+  >({
     queryKey: ["products"],
     queryFn: async () => {
       return (await axios.get("/api/products")).data.data;
@@ -82,19 +87,15 @@ export const ProductSelectionModal = ({
     const newProducts = productsQuery.data
       ?.filter((prod) => selected.has(prod.id))
       .map((prod) => {
-        const existing = selectedProducts.find((s) => s.id === prod.id);
-        return existing
-          ? {
-              ...existing,
-              rating: existing.rating ? existing.rating : defaultRating,
-            }
-          : {
-              id: prod.id,
-              name: prod.name,
-              size: prod.size,
-              amount: "",
-              rating: defaultRating || undefined,
-            };
+        const sizes = new Set(prod.productVariants.map((pv) => pv.size));
+        return {
+          id: prod.id,
+          name: prod.name,
+          sizeOptions: Array.from(sizes).map((size) => ({
+            size,
+            amount: "",
+          })),
+        };
       });
     onApply(newProducts || []);
   };
@@ -162,9 +163,7 @@ export const ProductSelectionModal = ({
                       className="text-sm font-medium leading-none cursor-pointer flex-1 p-1"
                     >
                       <div className="flex items-center justify-between">
-                        <span>
-                          {product.name} ({productSizeName[product.size]})
-                        </span>
+                        <span>{product.name}</span>
                       </div>
                     </label>
                   </div>

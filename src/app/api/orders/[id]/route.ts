@@ -2,7 +2,6 @@ import { Prisma } from "@/generated/prisma/client";
 import {
   DeliveryPeriod,
   FormStatus,
-  LogType,
   OrderStatus,
 } from "@/generated/prisma/enums";
 import { SP_TIMEZONE } from "@/lib/env";
@@ -16,7 +15,7 @@ import { DateTime } from "luxon";
 import z from "zod";
 
 export const PUT = createRoute(
-  async (req, { params, body, auth }) => {
+  async (req, { params, body }) => {
     const { id } = params;
 
     await Promise.all([
@@ -65,7 +64,6 @@ export const PUT = createRoute(
           honoreeName: body.honoreeName,
           tributeCardPhrase: body.tributeCardPhrase,
           tributeCardType: body.tributeCardType,
-          productId: body.productId,
           supplierNote: body.supplierNote,
           deliveryAddress: body.deliveryAddress,
           deliveryZipCode: Number(body.deliveryZipCode),
@@ -73,16 +71,28 @@ export const PUT = createRoute(
           deliveryAddressComplement: body.deliveryAddressComplement,
           deliveryAddressNumber: body.deliveryAddressNumber,
           ibge: body.deliveryIbge,
-          auditLogs: {
-            create: {
-              author: auth?.user.name || "Usuario Desconhecido",
-              action: "Formalizou pedido",
-              type: LogType.CREATION,
-              description: "Pedido formalizado pelo vendedor",
-            },
-          },
         },
       });
+
+      if (
+        order.orderStatus === OrderStatus.PENDING_PREPARATION ||
+        order.orderStatus === OrderStatus.PENDING_WAITING ||
+        order.orderStatus === OrderStatus.PENDING_CANCELLED
+      ) {
+        await tx.orderProduct.deleteMany({
+          where: {
+            orderId: order.id,
+          },
+        });
+        await tx.orderProduct.createMany({
+          data: body.productVariants.flatMap((pv) =>
+            Array.from({ length: pv.quantity }).map(() => ({
+              variantId: pv.variantId,
+              orderId: order.id,
+            })),
+          ),
+        });
+      }
 
       const contactData: Prisma.ContactCreateArgs["data"] = {
         name: body.customerName,

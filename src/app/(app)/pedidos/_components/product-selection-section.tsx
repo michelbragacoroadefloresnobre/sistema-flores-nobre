@@ -38,9 +38,14 @@ export interface ProductItem {
 type Props = {
   value: ProductItem[];
   onChange: (values: ProductItem[]) => void;
+  hasSupplier?: boolean;
 };
 
-export function ProductSelectionSection({ value, onChange }: Props) {
+export function ProductSelectionSection({
+  value,
+  onChange,
+  hasSupplier = true,
+}: Props) {
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
@@ -53,8 +58,6 @@ export function ProductSelectionSection({ value, onChange }: Props) {
     queryFn: async () =>
       axios.get("/api/products").then((res) => res.data.data),
   });
-
-  console.log({ data });
 
   const toggleProduct = (productId: string) => {
     setExpandedProduct((prev) => (prev === productId ? null : productId));
@@ -97,7 +100,8 @@ export function ProductSelectionSection({ value, onChange }: Props) {
       </div>
 
       <div className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
-        {isPending &&
+        {!hasSupplier &&
+          isPending &&
           Array.from({ length: 5 }).map((_, i) => (
             <Card key={i} className="overflow-hidden">
               <div className="w-full px-6 py-4 flex items-center justify-between gap-3">
@@ -105,12 +109,13 @@ export function ProductSelectionSection({ value, onChange }: Props) {
                   <Skeleton className="h-4 w-2/3" />
                   <Skeleton className="h-3 w-1/3" />
                 </div>
+                false
                 <Skeleton className="h-4 w-4 shrink-0 rounded-full" />
               </div>
             </Card>
           ))}
 
-        {error && (
+        {!hasSupplier && error && (
           <div className="flex flex-col items-center justify-center py-8 text-destructive space-y-2 font-body text-center">
             <AlertCircle className="h-8 w-8 opacity-80" />
             <p className="text-sm font-medium">Erro ao carregar os produtos.</p>
@@ -118,13 +123,21 @@ export function ProductSelectionSection({ value, onChange }: Props) {
           </div>
         )}
 
-        {!isPending && !error && data?.length === 0 && (
+        {!hasSupplier && !isPending && !error && data?.length === 0 && (
           <p className="text-sm text-muted-foreground font-body py-8 text-center">
             Nenhum produto encontrado.
           </p>
         )}
 
-        {!isPending &&
+        {hasSupplier && (
+          <p className="text-sm text-muted-foreground font-body py-8 text-center">
+            Não é possivel selecionar produtos depois que o pedido foi enviado
+            para fornecedor
+          </p>
+        )}
+
+        {!hasSupplier &&
+          !isPending &&
           !error &&
           data?.map((product) => {
             console.log({ product });

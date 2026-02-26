@@ -8,7 +8,7 @@ import {
 } from "@/generated/prisma/enums";
 import z from "zod";
 
-export const productItemSchema = z.object({
+export const createOrderItemSchema = z.object({
   productId: z.string(),
   variantId: z.string(),
   productName: z.string(),
@@ -93,9 +93,9 @@ export const createOrderSchema = z.object({
   customerCity: z.string().min(1),
   customerUf: z.enum(UF),
 
-  productVariants: z.array(productItemSchema),
+  productVariants: z.array(createOrderItemSchema),
 });
 
 export type CreateOrderData = z.infer<typeof createOrderSchema>;
+export type CreateOrderItemData = z.infer<typeof createOrderItemSchema>;
 export type CreateOrderFormSection = "Detalhes" | "Pedido" | "Contato";
-export type ProductItem = z.infer<typeof productItemSchema>;

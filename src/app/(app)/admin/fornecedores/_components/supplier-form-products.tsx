@@ -1,11 +1,11 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { StarRating } from "@/components/ui/star-rating";
+import { ProductSize } from "@/generated/prisma/enums";
 import { convertCurrencyInput } from "@/lib/utils";
-import { productSizeName } from "@/modules/products/product.mapper";
+import { PRODUCT_SIZE_MAP } from "@/modules/products/constants";
 import { SupplierFormData } from "@/modules/suppliers/dtos/supplier-form.dto";
-import { ShoppingCart, X } from "lucide-react";
+import { ChevronDown, ChevronRight, ShoppingCart, X } from "lucide-react";
 import { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { ProductSelectionModal } from "./supplier-form-products-dialog";
@@ -19,6 +19,20 @@ export const SupplierFormProducts = ({ form }: ProductsFormProps) => {
   const products =
     form.watch("products").sort((a, b) => a.name.localeCompare(b.name)) || [];
 
+  const [expandedProducts, setExpandedProducts] = useState(new Set());
+
+  const toggleExpand = (productId) => {
+    setExpandedProducts((prev) => {
+      const next = new Set(prev);
+      if (next.has(productId)) {
+        next.delete(productId);
+      } else {
+        next.add(productId);
+      }
+      return next;
+    });
+  };
+
   const handleRemoveProduct = (productId: string) => {
     const updatedProducts = products.filter(
       (prod: any) => prod.id !== productId,
@@ -26,16 +40,25 @@ export const SupplierFormProducts = ({ form }: ProductsFormProps) => {
     form.setValue("products", updatedProducts);
   };
 
-  const handleUpdatePrice = (productId: string, amount: string) => {
-    const updatedProducts = products.map((prod: any) =>
-      prod.id === productId ? { ...prod, amount } : prod,
-    );
-    form.setValue("products", updatedProducts);
-  };
-
-  const handleUpdateRating = (productId: string, rating: number) => {
-    const updatedProducts = products.map((prod: any) =>
-      prod.id === productId ? { ...prod, rating } : prod,
+  const handleUpdatePrice = (
+    productId: string,
+    size: ProductSize,
+    amount: string,
+  ) => {
+    const updatedProducts = products.map((prod) =>
+      prod.id === productId
+        ? {
+            ...prod,
+            sizeOptions: prod.sizeOptions.map((so) =>
+              so.size === size
+                ? {
+                    ...so,
+                    amount: amount,
+                  }
+                : so,
+            ),
+          }
+        : prod,
     );
     form.setValue("products", updatedProducts);
   };
@@ -68,60 +91,92 @@ export const SupplierFormProducts = ({ form }: ProductsFormProps) => {
             <table className="w-full">
               <thead className="bg-muted/50">
                 <tr>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground w-8"></th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                    Produto
+                    Produto / Tamanho
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                     Valor (R$)
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                    Avaliação
                   </th>
                   <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
                     Ações
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
-                {products.map((product) => (
-                  <tr
+
+              {products.map((product) => {
+                const isExpanded = expandedProducts.has(product.id);
+
+                return (
+                  <tbody
                     key={product.id}
-                    className="hover:bg-muted/50 transition-colors"
+                    className="divide-y divide-border border-b border-border last:border-0"
                   >
-                    <td className="px-4 py-3 text-sm font-medium">
-                      {product.name} ({productSizeName[product.size]})
-                    </td>
-                    <td className="px-4 py-3">
-                      <Input
-                        type="text"
-                        placeholder="R$ 0.00"
-                        value={product.amount ? "R$ " + product.amount : ""}
-                        onChange={(e) => {
-                          const input = convertCurrencyInput(e.target.value);
-                          handleUpdatePrice(product.id, input || "");
-                        }}
-                        className="w-32"
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <StarRating
-                        value={product.rating}
-                        onValueChange={(v) => handleUpdateRating(product.id, v)}
-                      />
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveProduct(product.id)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+                    <tr
+                      className="bg-muted/20 cursor-pointer hover:bg-muted/30 transition-colors"
+                      onClick={() => toggleExpand(product.id)}
+                    >
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm font-bold text-foreground">
+                        {product.name}
+                      </td>
+                      <td className="px-4 py-3"></td>
+                      <td className="px-4 py-3 text-right">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveProduct(product.id);
+                          }}
+                          title="Remover todos os tamanhos deste produto"
+                        >
+                          <X className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </td>
+                    </tr>
+
+                    {isExpanded &&
+                      product.sizeOptions.map((option) => (
+                        <tr
+                          key={option.size}
+                          className="hover:bg-muted/50 transition-colors bg-background"
+                        >
+                          <td className="px-4 py-3"></td>
+                          <td className="px-4 py-3 text-sm font-medium pl-8 text-muted-foreground">
+                            ↳ {PRODUCT_SIZE_MAP[option.size]}
+                          </td>
+                          <td className="px-4 py-3" colSpan={2}>
+                            <Input
+                              type="text"
+                              placeholder="R$ 0,00"
+                              value={option.amount ? "R$ " + option.amount : ""}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) => {
+                                const input = convertCurrencyInput(
+                                  e.target.value,
+                                );
+                                handleUpdatePrice(
+                                  product.id,
+                                  option.size,
+                                  input || "",
+                                );
+                              }}
+                              className="w-32"
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                );
+              })}
             </table>
           </div>
         </div>

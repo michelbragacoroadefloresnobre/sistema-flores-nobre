@@ -9,20 +9,28 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatBRL } from "@/lib/utils";
+import { cn, formatBRL } from "@/lib/utils";
 import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { useMemo } from "react";
-import { ProductItem } from "../../_components/product-selection-section";
+
+import { ProductItem } from "./product-selection-section";
 
 type Props = {
   value: ProductItem[];
   onChange: (values: ProductItem[]) => void;
+  hasSupplier?: boolean;
+  hidePricing?: boolean;
 };
 
-export function OrderSummarySection({ value, onChange }: Props) {
+export function OrderSummarySection({
+  value,
+  onChange,
+  hasSupplier = false,
+  hidePricing = false,
+}: Props) {
   const { subtotal, itemCount } = useMemo(() => {
     const subtotal = value.reduce(
-      (sum, item) => sum + item.unitPrice * item.quantity,
+      (sum, item) => sum + (item.unitPrice || 0) * item.quantity,
       0,
     );
     const itemCount = value.reduce((sum, item) => sum + item.quantity, 0);
@@ -80,16 +88,24 @@ export function OrderSummarySection({ value, onChange }: Props) {
                   <TableHead className="font-body font-semibold">
                     Item
                   </TableHead>
-                  <TableHead className="font-body font-semibold w-25 text-right">
-                    Preço
-                  </TableHead>
+
+                  {!hidePricing && (
+                    <TableHead className="font-body font-semibold w-25 text-right">
+                      Preço
+                    </TableHead>
+                  )}
+
                   <TableHead className="font-body font-semibold w-30 text-center">
                     Qtd
                   </TableHead>
-                  <TableHead className="font-body font-semibold w-25 text-right">
-                    Subtotal
-                  </TableHead>
-                  <TableHead className="w-10" />
+
+                  {!hidePricing && (
+                    <TableHead className="font-body font-semibold w-25 text-right">
+                      Subtotal
+                    </TableHead>
+                  )}
+
+                  <TableHead className={cn("w-12")} />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -103,27 +119,32 @@ export function OrderSummarySection({ value, onChange }: Props) {
                         {item.productName}
                       </p>
                     </TableCell>
-                    <TableCell className="text-right font-body text-sm p-1">
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={item.unitPrice}
-                        onChange={(e) =>
-                          updatePrice(
-                            item.variantId,
-                            parseFloat(e.target.value) || 0,
-                          )
-                        }
-                        className="h-8 w-25 text-right font-body text-sm border-transparent hover:border-input focus:border-input ml-auto"
-                      />
-                    </TableCell>
+
+                    {!hidePricing && (
+                      <TableCell className="text-right font-body text-sm p-1">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={item.unitPrice}
+                          onChange={(e) =>
+                            updatePrice(
+                              item.variantId,
+                              parseFloat(e.target.value) || 0,
+                            )
+                          }
+                          className="h-8 w-25 text-right font-body text-sm border-transparent hover:border-input focus:border-input ml-auto"
+                        />
+                      </TableCell>
+                    )}
+
                     <TableCell>
                       <div className="flex items-center justify-center gap-1">
                         <Button
                           type="button"
                           variant="outline"
                           size="icon"
+                          disabled={hasSupplier}
                           className="h-7 w-7"
                           onClick={() => updateQuantity(item.variantId, -1)}
                         >
@@ -136,6 +157,7 @@ export function OrderSummarySection({ value, onChange }: Props) {
                           type="button"
                           variant="outline"
                           size="icon"
+                          disabled={hasSupplier}
                           className="h-7 w-7"
                           onClick={() => updateQuantity(item.variantId, 1)}
                         >
@@ -143,13 +165,18 @@ export function OrderSummarySection({ value, onChange }: Props) {
                         </Button>
                       </div>
                     </TableCell>
-                    <TableCell className="text-right font-body text-sm font-medium">
-                      {formatBRL(item.unitPrice * item.quantity)}
-                    </TableCell>
+
+                    {!hidePricing && (
+                      <TableCell className="text-right font-body text-sm font-medium">
+                        {formatBRL(item.unitPrice * item.quantity)}
+                      </TableCell>
+                    )}
+
                     <TableCell>
                       <Button
                         type="button"
                         variant="ghost"
+                        disabled={hasSupplier}
                         size="icon"
                         className="h-7 w-7 text-destructive hover:text-destructive"
                         onClick={() => removeItem(item.variantId)}
@@ -163,14 +190,16 @@ export function OrderSummarySection({ value, onChange }: Props) {
             </Table>
           </div>
 
-          <div className="flex items-center justify-end gap-4 pt-2">
-            <span className="text-sm text-muted-foreground font-body">
-              Total:
-            </span>
-            <span className="text-xl font-semibold font-display text-foreground">
-              {formatBRL(subtotal)}
-            </span>
-          </div>
+          {!hidePricing && (
+            <div className="flex items-center justify-end gap-4 pt-2">
+              <span className="text-sm text-muted-foreground font-body">
+                Total:
+              </span>
+              <span className="text-xl font-semibold font-display text-foreground">
+                {formatBRL(subtotal)}
+              </span>
+            </div>
+          )}
         </>
       )}
     </section>

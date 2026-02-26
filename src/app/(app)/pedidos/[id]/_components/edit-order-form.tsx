@@ -49,7 +49,6 @@ export const EditOrderForm = ({ form }: Props) => {
           />
         )}
       </Card>
-      {/* <PaymentsSection orderId={order.id} data={order.payments} /> */}
     </div>
   );
 };

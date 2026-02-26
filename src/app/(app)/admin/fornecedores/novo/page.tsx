@@ -37,35 +37,6 @@ const SupplierForm = () => {
       groupId: "",
       regions: [],
       products: [],
-      // weekHours: {
-      //   [WeekDay.MONDAY]: {
-      //     isOpen: true,
-      //     openTime: "08:00",
-      //     closeTime: "18:00",
-      //   },
-      //   [WeekDay.TUESDAY]: {
-      //     isOpen: true,
-      //     openTime: "08:00",
-      //     closeTime: "18:00",
-      //   },
-      //   [WeekDay.WEDNESDAY]: {
-      //     isOpen: true,
-      //     openTime: "08:00",
-      //     closeTime: "18:00",
-      //   },
-      //   [WeekDay.THURSDAY]: {
-      //     isOpen: true,
-      //     openTime: "08:00",
-      //     closeTime: "18:00",
-      //   },
-      //   [WeekDay.FRIDAY]: {
-      //     isOpen: true,
-      //     openTime: "08:00",
-      //     closeTime: "18:00",
-      //   },
-      //   [WeekDay.SATURDAY]: { isOpen: false, openTime: "", closeTime: "" },
-      //   [WeekDay.SUNDAY]: { isOpen: false, openTime: "", closeTime: "" },
-      // },
     },
   });
 

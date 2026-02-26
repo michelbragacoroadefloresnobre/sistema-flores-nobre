@@ -10,6 +10,13 @@ export const GET = createRoute(async (req, { params }) => {
     where: {
       id: params?.id,
     },
+    include: {
+      orderProducts: {
+        include: {
+          variant: true,
+        },
+      },
+    },
   });
 
   if (!order)
@@ -24,6 +31,14 @@ export const GET = createRoute(async (req, { params }) => {
           end: { gte: order.deliveryZipCode },
         },
       },
+      AND: order.orderProducts.map((op) => ({
+        products: {
+          some: {
+            productId: op.variant.productId,
+            size: op.variant.size,
+          },
+        },
+      })),
     },
     include: {
       supplierPanels: {

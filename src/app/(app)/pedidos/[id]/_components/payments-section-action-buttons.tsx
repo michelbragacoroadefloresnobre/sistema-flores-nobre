@@ -358,16 +358,16 @@ export function PaymentsSectionActionButtons({
     }
   };
 
-  const canRefundPayment = () => {
-    return (
-      // PaymentUtils.isRefunded(payment) === "partially") &&
-      payment.status === PaymentStatus.PAID &&
-      [PaymentType.PIX, PaymentType.CARD_CREDIT].includes(
-        payment.type as any,
-      ) &&
-      !!payment.externalId
-    );
-  };
+  // const canRefundPayment = () => {
+  //   return (
+  //     // PaymentUtils.isRefunded(payment) === "partially") &&
+  //     payment.status === PaymentStatus.PAID &&
+  //     [PaymentType.PIX, PaymentType.CARD_CREDIT].includes(
+  //       payment.type as any,
+  //     ) &&
+  //     !!payment.externalId
+  //   );
+  // };
 
   // const RefundPaymentButton = () => {
   //   const { data: auth } = authClient.useSession();
@@ -451,12 +451,10 @@ export function PaymentsSectionActionButtons({
       switch (payment.type) {
         case PaymentType.PIX:
         case PaymentType.CARD_CREDIT:
+        case PaymentType.BOLETO:
           if (payment.status === PaymentStatus.ACTIVE) return true;
           if (payment.status === PaymentStatus.PAID && !payment.externalId)
             return true;
-          return false;
-        case PaymentType.BOLETO:
-          if (payment.status === PaymentStatus.ACTIVE) return true;
           return false;
         case PaymentType.MONEY:
         case PaymentType.PATNERSHIP:
@@ -472,23 +470,23 @@ export function PaymentsSectionActionButtons({
       }
     };
 
-    const isVisible = () => {
-      switch (payment.type) {
-        case PaymentType.PIX:
-        case PaymentType.CARD_CREDIT:
-          if (canRefundPayment()) return false;
-          return true;
-        case PaymentType.BOLETO:
-        case PaymentType.MONEY:
-        case PaymentType.PATNERSHIP:
-        case PaymentType.PIX_CNPJ:
-          return true;
-        default:
-          return false;
-      }
-    };
+    // const isVisible = () => {
+    //   switch (payment.type) {
+    //     case PaymentType.PIX:
+    //     case PaymentType.CARD_CREDIT:
+    //       if (canRefundPayment()) return false;
+    //       return true;
+    //     case PaymentType.BOLETO:
+    //     case PaymentType.MONEY:
+    //     case PaymentType.PATNERSHIP:
+    //     case PaymentType.PIX_CNPJ:
+    //       return true;
+    //     default:
+    //       return false;
+    //   }
+    // };
 
-    if (!isVisible()) return;
+    // if (!isVisible()) return;
 
     return (
       <>
