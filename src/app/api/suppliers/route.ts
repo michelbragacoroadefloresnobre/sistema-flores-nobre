@@ -1,6 +1,20 @@
 import { createRoute } from "@/lib/handler/route-handler";
 import prisma from "@/lib/prisma";
 import { supplierFormSchema } from "@/modules/suppliers/dtos/supplier-form.dto";
+import createHttpError from "http-errors";
+
+export const GET = createRoute(async (req, { params }) => {
+
+  const suppliers = await prisma.supplier.findMany({
+    where: {
+      OR: [{ disabledUntil: null }, { disabledUntil: { lt: new Date() } }],
+    },
+  });
+
+  return {
+    data: suppliers,
+  };
+});
 
 export const POST = createRoute(
   async (req, { body }) => {

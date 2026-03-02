@@ -39,6 +39,7 @@ export const ProductForm = ({
         size: pv.size || ("" as any),
         color: pv.color || ("" as any),
         imageUrl: pv.imageUrl || "",
+        siteId: pv.siteId || "",
         price: Number(pv.price) ? Number(pv.price).toFixed(2) : "",
       })),
     },
@@ -113,6 +114,7 @@ export const ProductForm = ({
                     color: v.color,
                     size: v.size,
                     imageUrl: v.imageUrl as any,
+                    siteId: v.siteId,
                     price: v.price,
                   })),
                 );

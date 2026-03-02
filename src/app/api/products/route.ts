@@ -21,6 +21,7 @@ export const POST = createRoute(
               color: pv.color,
               active: true,
               imageUrl: pv.imageUrl,
+              siteId: pv.siteId,
               size: pv.size,
               price: pv.price || undefined,
             })),

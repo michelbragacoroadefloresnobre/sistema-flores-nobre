@@ -44,10 +44,11 @@ export interface VariantPayload {
   size: ProductSize;
   color: ProductColor;
   price: string;
+  siteId: string; 
   imageUrl?: string;
 }
 
-type VariantOverride = { imageUrl?: string; price?: string };
+type VariantOverride = { imageUrl?: string; price?: string, siteId?: string };
 
 interface ProductVariantsProps {
   data?: ProductVariant[];
@@ -89,6 +90,7 @@ export function ProductVariants({
         initialOverrides[id] = {
           price: Number(v.price) ? Number(v.price).toFixed(2) : "",
           imageUrl: v.imageUrl || "",
+          siteId: v.siteId || "",
         };
       });
 
@@ -288,6 +290,9 @@ export function ProductVariants({
                   Variação
                 </TableHead>
                 <TableHead className="font-body font-semibold w-35">
+                  Id do Site
+                </TableHead>
+                <TableHead className="font-body font-semibold w-35">
                   Preço (R$)
                 </TableHead>
                 <TableHead
@@ -307,6 +312,16 @@ export function ProductVariants({
                   <TableRow key={row.id}>
                     <TableCell className="font-body font-medium text-foreground">
                       {row.label}
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="text"
+                        placeholder="00000"
+                        value={merged.siteId ? merged.siteId : ""}
+                        onChange={(e) => {
+                          updateOverride(row.id, { siteId: e.target.value });
+                        }}
+                      />
                     </TableCell>
                     <TableCell>
                       <Input

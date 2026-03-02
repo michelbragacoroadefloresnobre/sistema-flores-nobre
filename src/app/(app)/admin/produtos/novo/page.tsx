@@ -95,6 +95,7 @@ const ProductForm = () => {
                   variations.map((v) => ({
                     color: v.color,
                     size: v.size,
+                    siteId: v.siteId,
                     imageUrl: v.imageUrl as any,
                     price: v.price,
                   })),

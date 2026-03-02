@@ -31,6 +31,7 @@ export const PUT = createRoute(
               active: true,
               imageUrl: pv.imageUrl,
               price: pv.price || undefined,
+              siteId: pv.siteId || undefined,
             },
           });
         } else {
@@ -41,6 +42,7 @@ export const PUT = createRoute(
               size: pv.size,
               imageUrl: pv.imageUrl,
               price: pv.price || undefined,
+              siteId: pv.siteId || undefined,
               active: true,
             },
           });
