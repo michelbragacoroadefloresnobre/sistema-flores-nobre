@@ -18,8 +18,7 @@ export default async function Page({ params }: { params }) {
               OrderStatus.PENDING_PREPARATION,
               OrderStatus.PENDING_CANCELLED,
               OrderStatus.PENDING_WAITING,
-              OrderStatus.PRODUCING_PREPARATION,
-              OrderStatus.PRODUCING_CONFIRMATION,
+              OrderStatus.PRODUCING,
               OrderStatus.DELIVERING_ON_ROUTE,
               OrderStatus.DELIVERING_DELIVERED,
               OrderStatus.FINALIZED,
@@ -27,7 +26,7 @@ export default async function Page({ params }: { params }) {
           },
         },
       },
-      include: { order: { include: { product: true } } },
+      include: { order: true },
     });
 
     if (!payment)

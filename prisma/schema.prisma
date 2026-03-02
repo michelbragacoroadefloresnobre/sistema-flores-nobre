@@ -131,15 +131,17 @@ model SupplierPanel {
 
 model SupplierPanelPhoto {
   id              String                   @id @default(cuid())
-  imageUrl        String
+  imageUrl        String?
+  rejectionReason String?
   status          SupplierPanelPhotoStatus
   supplierPanelId String
   supplierPanel   SupplierPanel            @relation(fields: [supplierPanelId], references: [id], onDelete: Cascade)
   orderProductId  String
-  orderProduct    OrderProduct             @relation(fields: [orderProductId], references: [id])
+  orderProduct    OrderProduct             @relation(fields: [orderProductId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
+  @@index([orderProductId, supplierPanelId])
   @@map("supplier_panel_photo")
 }
 
@@ -340,9 +342,10 @@ model Verification {
 }
 
 enum SupplierPanelPhotoStatus {
-  WAITING
-  REFUSED
+  PENDING
+  SUBMITTED
   APPROVED
+  REJECTED
 }
 
 enum ConversionMessageType {
@@ -424,8 +427,7 @@ enum OrderStatus {
   PENDING_PREPARATION
   PENDING_CANCELLED
   PENDING_WAITING
-  PRODUCING_PREPARATION
-  PRODUCING_CONFIRMATION
+  PRODUCING
   DELIVERING_ON_ROUTE
   DELIVERING_DELIVERED
   FINALIZED

@@ -3,17 +3,16 @@
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ShoppingBag } from "lucide-react";
-import Image from "next/image";
 
 interface OrderSummaryProps {
-  productName: string;
-  image: string;
+  // productName: string;
+  // image: string;
   value: string;
 }
 
 export const OrderSummary = ({
-  productName,
-  image,
+  // productName,
+  // image,
   value,
 }: OrderSummaryProps) => {
   const formatCurrency = (value: number) => {
@@ -23,10 +22,10 @@ export const OrderSummary = ({
     }).format(value);
   };
 
-  const startsWith = productName
-    .trim()
-    .toLowerCase()
-    .startsWith("coroa de flores");
+  // const startsWith = productName
+  //   .trim()
+  //   .toLowerCase()
+  //   .startsWith("coroa de flores");
 
   return (
     <Card className="p-6 space-y-4 bg-card">
@@ -42,7 +41,7 @@ export const OrderSummary = ({
       <div className="space-y-4">
         <div className="flex gap-4">
           <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted shrink-0">
-            {image ? (
+            {/* {image ? (
               <Image
                 src={image}
                 alt={productName}
@@ -50,14 +49,14 @@ export const OrderSummary = ({
                 height={200}
                 className="w-full h-full object-cover"
               />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <ShoppingBag className="w-8 h-8 text-muted-foreground" />
-              </div>
-            )}
+            ) : ( */}
+            <div className="w-full h-full flex items-center justify-center">
+              <ShoppingBag className="w-8 h-8 text-muted-foreground" />
+            </div>
+            {/* )} */}
           </div>
           <div className="flex-1 flex flex-col justify-between">
-            {startsWith ? (
+            {/* {startsWith ? (
               <>
                 <p className="font-medium text-foreground">Coroa de Flores</p>
                 <p>{productName.replace(/Coroa de Flores/i, "").trim()}</p>
@@ -65,14 +64,14 @@ export const OrderSummary = ({
                   {formatCurrency(Number(value))}
                 </p>
               </>
-            ) : (
-              <>
-                <p className="font-medium text-foreground">{productName}</p>
-                <p className="text-lg font-semibold text-[#34c759]">
-                  {formatCurrency(Number(value))}
-                </p>
-              </>
-            )}
+            ) : ( */}
+            <>
+              {/* <p className="font-medium text-foreground">{productName}</p> */}
+              <p className="text-lg font-semibold text-[#34c759]">
+                {formatCurrency(Number(value))}
+              </p>
+            </>
+            {/* )} */}
           </div>
         </div>
       </div>

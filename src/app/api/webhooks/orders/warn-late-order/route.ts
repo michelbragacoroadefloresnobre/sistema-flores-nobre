@@ -17,8 +17,8 @@ export async function POST(request: NextRequest) {
       },
     },
     include: {
+      order: true,
       supplier: true,
-      order: { include: { product: true } },
     },
   });
 

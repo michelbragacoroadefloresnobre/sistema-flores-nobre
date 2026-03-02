@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { OrderStatus } from "@/generated/prisma/enums";
 import { cn, safeCopyToClipboard } from "@/lib/utils";
 import { iOrderProducing } from "@/modules/orders/dtos/kanban.dto";
 import { Edit, ImageIcon, LinkIcon } from "lucide-react";
@@ -45,9 +44,9 @@ export function KanbanCardProducing({ order }: { order: iOrderProducing }) {
         )}
       >
         <div className="flex flex-col py-2 px-6">
-          {order.orderStatus === OrderStatus.PRODUCING_CONFIRMATION && (
+          {order.waitingApprovation && (
             <div className="flex items-center flex-wrap gap-2">
-              {order.orderStatus === OrderStatus.PRODUCING_CONFIRMATION && (
+              {order.waitingApprovation && (
                 <BadgeStatus
                   variant="success"
                   icon={ImageIcon}

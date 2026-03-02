@@ -95,8 +95,6 @@ export const buildRequestMessage = (data: {
   orderId: string;
   deliveryLocal: string;
   time: string;
-  productName: string;
-  size: string;
   supplierNote: string | undefined;
 }) => {
   let message = `
@@ -107,12 +105,6 @@ export const buildRequestMessage = (data: {
 
 ⏰ Horário da Entrega:
 *${data.time}*
-
-🌹 Modelo da Coroa de Flores: 
-*${data.productName}*
-
-↔️ Tamanho:
-*${data.size}*
 `;
 
   if (data.supplierNote)
@@ -129,9 +121,6 @@ export const buildConfirmationMessage = (data: {
   honoreeName: string;
   deliveryLocal: string;
   time: string;
-  tributeCardPhrase: string;
-  productName: string;
-  size: string;
   supplierNote: string | undefined;
 }) => {
   let message = `
@@ -145,15 +134,6 @@ PEDIDO 📦 *#NOBRE${data.orderId}*
 
 ⏰ Horário:
 *${data.time}*
-
-📩 Frase de Homenagem: 
-*${data.tributeCardPhrase}*
-
-🌹 Produto: 
-*${data.productName}*
-
-↔️ Tamanho:
-*${data.size}*
 `;
 
   if (data.supplierNote)

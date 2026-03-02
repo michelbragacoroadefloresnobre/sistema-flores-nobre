@@ -1,6 +1,6 @@
 import { OrderStatus, SupplierPanelStatus } from "@/generated/prisma/enums";
 import prisma from "@/lib/prisma";
-import { cn } from "@/lib/utils"; // Assumindo que você tem o util do shadcn
+import { cn, getVariantLabel } from "@/lib/utils"; // Assumindo que você tem o util do shadcn
 import { format } from "date-fns";
 import { Clock, Heart, MapPin, Package, User } from "lucide-react";
 import Image from "next/image";
@@ -88,11 +88,19 @@ export default async function Page({
   let supplierPanel = await prisma.supplierPanel.findUnique({
     where: { id },
     include: {
-      order: {
+      supplierPanelPhotos: {
         include: {
-          product: { select: { id: true, name: true, imageUrl: true } },
+          orderProduct: {
+            include: {
+              variant: { include: { product: { select: { name: true } } } },
+            },
+          },
+        },
+        orderBy: {
+          orderProductId: "asc",
         },
       },
+      order: true,
     },
   });
 
@@ -144,8 +152,7 @@ export default async function Page({
 
   const getActionSectionContent = () => {
     switch (order.orderStatus) {
-      case OrderStatus.PRODUCING_PREPARATION:
-      case OrderStatus.PRODUCING_CONFIRMATION:
+      case OrderStatus.PRODUCING:
         return (
           <>
             <div className="text-center mb-6">
@@ -155,9 +162,14 @@ export default async function Page({
               </p>
             </div>
             <ImageSection
-              referenceUrl={order.product.imageUrl}
-              imageUrl={supplierPanel.imageUrl}
-              orderStatus={order.orderStatus}
+              products={supplierPanel.supplierPanelPhotos.map((photo) => ({
+                spPhotoId: photo.id,
+                referenceUrl: photo.orderProduct.variant.imageUrl,
+                status: photo.status,
+                imageUrl: photo.imageUrl,
+                rejectionReason: photo.rejectionReason,
+                name: `${photo.orderProduct.variant.product.name} (${getVariantLabel({ size: photo.orderProduct.variant.size, color: photo.orderProduct.variant.color })})`,
+              }))}
               supplierPanelId={supplierPanel.id}
             />
           </>
@@ -180,8 +192,7 @@ export default async function Page({
   };
 
   const isCancelable = [
-    OrderStatus.PRODUCING_PREPARATION,
-    OrderStatus.PRODUCING_CONFIRMATION,
+    OrderStatus.PRODUCING,
     OrderStatus.DELIVERING_ON_ROUTE,
   ].includes(order.orderStatus as any);
 
@@ -223,7 +234,7 @@ export default async function Page({
                   <Heart className="w-5 h-5 mt-0.5 shrink-0 text-red-500" />
                 }
                 label="Cartão de Homenagem"
-                value={order.tributeCardPhrase}
+                value={order.tributeCardPhrase || ""}
                 bgClass="bg-card hover:bg-muted/30 transition-colors"
               />
               <OrderInfoRow
@@ -242,14 +253,14 @@ export default async function Page({
                 value={`${String(order.deliveryZipCode).padStart(8, "0")}, ${order.deliveryAddressNumber || "S/N"}`}
                 bgClass="bg-card hover:bg-muted/30 transition-colors"
               />
-              <OrderInfoRow
+              {/* <OrderInfoRow
                 icon={
                   <Package className="w-5 h-5 mt-0.5 shrink-0 text-orange-500" />
                 }
                 label="Produto"
                 value={order.product.name}
                 bgClass="bg-card hover:bg-muted/30 transition-colors"
-              />
+              /> */}
 
               <CostSection supplierPanel={supplierPanel} />
             </div>

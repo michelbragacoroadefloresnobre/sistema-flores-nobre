@@ -44,7 +44,7 @@ type Props = {
 export function ProductSelectionSection({
   value,
   onChange,
-  hasSupplier = true,
+  hasSupplier = false,
 }: Props) {
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
