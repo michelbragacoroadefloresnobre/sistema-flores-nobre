@@ -9,6 +9,7 @@ import {
 import z from "zod";
 import createHttpError from "http-errors";
 import { Contact } from "lucide-react";
+import { createCityIfNotExists } from "../cities/city.service";
 
 // ---------------------------------------------------------------------------
 // Schemas
@@ -166,12 +167,7 @@ async function resolveCity(
   const city = await tx.city.findFirst({ where });
   if (city) return city;
 
-  const fallback = await tx.city.findFirst();
-  if (!fallback)
-    throw new createHttpError.BadRequest(
-      "Nenhuma cidade cadastrada no sistema",
-    );
-  return fallback;
+  return city;
 }
 
 // ---------------------------------------------------------------------------
@@ -222,7 +218,7 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
       });
     } else {
       contact = await tx.contact.create({
-        data: { ...contactData, city: { connect: { ibge: billingCity.ibge } } },
+        data: billingCity?.ibge ? { ...contactData, city: { connect: { ibge: billingCity?.ibge } } } : contactData,
       });
     }
 
@@ -263,7 +259,7 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
         select: { id: true },
       })) ??
       (await tx.user.findFirst({
-        where: { role: Role.ADMIN },
+        where: { role: "ADMIN" },
         select: { id: true },
       }));
     if (!defaultUser)
@@ -296,7 +292,7 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
         deliveryAddressComplement: shipping.address_2,
         deliveryNeighboorhood:
           getMeta(meta_data, "_shipping_neighborhood") || "",
-        ibge: deliveryCity.ibge,
+        ibge: deliveryCity?.ibge || null,
         supplierNote: getMeta(meta_data, "_shipping_observacoes") || "",
         contactId: contact.id,
         supplierPaymentStatus: SupplierPaymentStatus.WAITING,

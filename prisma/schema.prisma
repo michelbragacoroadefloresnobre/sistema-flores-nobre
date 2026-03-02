@@ -21,8 +21,8 @@ model Contact {
   addressNumber     String
   addressComplement String
   neighboorhood     String
-  ibge              String
-  city              City       @relation(fields: [ibge], references: [ibge])
+  ibge              String?
+  city              City?       @relation(fields: [ibge], references: [ibge])
   orders            Order[]
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
@@ -166,8 +166,8 @@ model Order {
   deliveryAddressNumber     String?
   deliveryAddressComplement String?
   deliveryNeighboorhood     String
-  ibge                      String
-  city                      City                  @relation(fields: [ibge], references: [ibge])
+  ibge                      String?
+  city                      City?                  @relation(fields: [ibge], references: [ibge])
   supplierNote              String
   contactId                 String
   contact                   Contact               @relation(fields: [contactId], references: [id])

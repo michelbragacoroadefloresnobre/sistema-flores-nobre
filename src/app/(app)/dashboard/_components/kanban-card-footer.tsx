@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 import { DeliveryPeriod } from "@/generated/prisma/enums";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, formatInTimeZone } from "date-fns-tz";
 import { BadgeDollarSign, CircleDollarSign, Clock, Info } from "lucide-react";
 import { useMemo } from "react";
 
@@ -43,7 +43,7 @@ export function OrderDisplay({
   const formattedDate =
     deliveryPeriod === DeliveryPeriod.EXPRESS
       ? format(deliveryUntil, "HH:mm")
-      : format(deliveryUntil, "dd/MM");
+      : formatInTimeZone(deliveryUntil, "UTC", "dd/MM");;
 
   return (
     <div
