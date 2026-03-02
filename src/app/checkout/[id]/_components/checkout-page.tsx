@@ -13,7 +13,7 @@ import { OrderSummary } from "./order-summary";
 interface Props {
   payment: Prisma.PaymentGetPayload<{
     include: {
-      order: { include: { product: true } };
+      order: true;
     };
   }>;
 }
@@ -92,8 +92,8 @@ export function CheckoutPage({ payment }: Props) {
       <div className="lg:col-span-1">
         <div className="sticky top-8">
           <OrderSummary
-            productName={payment.order.product.name}
-            image={payment.order.product.imageUrl}
+            // productName={payment.order.product.name}
+            // image={payment.order.product.imageUrl}
             value={Number(payment.amount).toFixed(2)}
           />
         </div>

@@ -28,8 +28,9 @@ export interface iOrderPending {
 export interface iOrderProducing {
   id: string;
   deliveryPeriod: DeliveryPeriod;
+  waitingApprovation: boolean;
   deliveryUntil: string;
-  supplierPanel: { id: string; imageUrl?: string | null };
+  supplierPanel: { id: string };
   seller: { id: string; name: string };
   supplierName: string;
   orderStatus: OrderStatus;
@@ -46,7 +47,7 @@ export interface iOrderDelivering {
   id: string;
   deliveryPeriod: DeliveryPeriod;
   deliveryUntil: string;
-  supplierPanel: { id: string; imageUrl?: string | null; cost: string | null };
+  supplierPanel: { id: string; cost: string | null };
   seller: { id: string; name: string };
   supplierName: string;
   orderStatus: OrderStatus;

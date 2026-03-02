@@ -1,4 +1,8 @@
-import { OrderStatus, SupplierPanelStatus } from "@/generated/prisma/enums";
+import {
+  OrderStatus,
+  SupplierPanelPhotoStatus,
+  SupplierPanelStatus,
+} from "@/generated/prisma/enums";
 import { env } from "@/lib/env";
 import { createRoute } from "@/lib/handler/route-handler";
 import prisma from "@/lib/prisma";
@@ -28,38 +32,50 @@ export const POST = createRoute(
             ],
           },
         },
-        include: {
-          product: true,
-        },
       });
-
-      if (!orders[0])
-        throw new createHttpError.BadRequest("Operação não disponivel");
 
       const order = orders[0];
+      if (!order)
+        throw new createHttpError.BadRequest("Operação não disponivel");
 
-      const supplier = await tx.supplier.findUniqueOrThrow({
-        where: { id: supplierId },
+      const orderProducts = await tx.orderProduct.findMany({
+        where: {
+          orderId: order.id,
+        },
         include: {
-          coverageAreas: {
-            where: {
-              start: { lte: order.deliveryZipCode },
-              end: { gte: order.deliveryZipCode },
-            },
-          },
-          products: {
-            where: {
-              productId: order.productId,
-              supplierId,
-            },
-          },
+          variant: { include: { product: true } },
         },
       });
 
-      if (!supplier.coverageAreas[0] || !supplier.products[0])
+      const coverageArea = await tx.coverageArea.findFirst({
+        where: {
+          supplierId,
+          start: { lte: order.deliveryZipCode },
+          end: { gte: order.deliveryZipCode },
+        },
+      });
+
+      if (!coverageArea)
         throw new createHttpError.BadRequest(
-          "Este fornecedor não é aplicavel para este pedido",
+          "Fornecedor invalido para este pedido",
         );
+
+      const productConditions = orderProducts.map((op) => ({
+        productId: op.variant.productId,
+        size: op.variant.size,
+      }));
+
+      const supplierProducts = await tx.productSupplier.findMany({
+        where: {
+          supplierId: supplierId,
+          OR: productConditions,
+        },
+      });
+
+      const totalCost = supplierProducts.reduce((total, sp) => {
+        const amount = Number(sp.amount) || 0;
+        return total + amount;
+      }, 0);
 
       const expiresIn = 10;
       const supplierPanel = await tx.supplierPanel.create({
@@ -68,8 +84,16 @@ export const POST = createRoute(
           supplierId: supplierId,
           status: SupplierPanelStatus.WAITING,
           expireAt: DateTime.now().plus({ minutes: expiresIn }).toJSDate(),
-          freight: supplier.coverageAreas[0].freight,
-          cost: supplier.products[0].amount,
+          freight: coverageArea.freight,
+          cost: totalCost || undefined,
+          supplierPanelPhotos: {
+            createMany: {
+              data: orderProducts.map((op) => ({
+                status: SupplierPanelPhotoStatus.PENDING,
+                orderProductId: op.id,
+              })),
+            },
+          },
         },
         include: {
           supplier: true,
@@ -95,8 +119,6 @@ export const POST = createRoute(
       orderId: order.id,
       deliveryLocal: `${order.deliveryAddress || ""}`,
       time: format(order.deliveryUntil, "dd/MM/yyyy HH:mm"),
-      productName: order.product.name,
-      size: order.product.size,
       supplierNote: order.supplierNote,
     });
 

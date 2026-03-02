@@ -1,4 +1,8 @@
-import { OrderStatus, SupplierPanelStatus } from "@/generated/prisma/enums";
+import {
+  OrderStatus,
+  SupplierPanelPhotoStatus,
+  SupplierPanelStatus,
+} from "@/generated/prisma/enums";
 import { PaymentUtils } from "@/lib/payment-utils";
 import prisma from "@/lib/prisma";
 import {
@@ -68,10 +72,7 @@ export const getProducingOrders = async (): Promise<
   const orders = await prisma.order.findMany({
     where: {
       orderStatus: {
-        in: [
-          OrderStatus.PRODUCING_PREPARATION,
-          OrderStatus.PRODUCING_CONFIRMATION,
-        ],
+        in: [OrderStatus.PRODUCING],
       },
     },
     orderBy: { deliveryUntil: "asc" },
@@ -85,6 +86,7 @@ export const getProducingOrders = async (): Promise<
         where: { status: SupplierPanelStatus.CONFIRMED },
         include: {
           supplier: { select: { name: true } },
+          supplierPanelPhotos: true,
         },
       },
     },
@@ -103,8 +105,10 @@ export const getProducingOrders = async (): Promise<
       supplierName: supplierPanel.supplier.name,
       supplierPanel: {
         id: supplierPanel.id,
-        imageUrl: supplierPanel.imageUrl,
       },
+      waitingApprovation: supplierPanel.supplierPanelPhotos.some(
+        (spp) => spp.status === SupplierPanelPhotoStatus.SUBMITTED,
+      ),
       customerName: order.contact.name,
       customerPhone: order.contact.phone,
       amount: PaymentUtils.getOrderTotalAmount(order.payments),
@@ -154,7 +158,6 @@ export const getDeliveringOrders = async (): Promise<
       supplierName: supplierPanel.supplier.name,
       supplierPanel: {
         id: supplierPanel.id,
-        imageUrl: supplierPanel.imageUrl,
         cost: (Number(supplierPanel.cost) || 0).toFixed(2) || null,
       },
       customerName: order.contact.name,

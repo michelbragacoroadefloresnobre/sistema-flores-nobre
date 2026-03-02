@@ -1,10 +1,8 @@
 import { OrderStatus, SupplierPanelStatus } from "@/generated/prisma/enums";
-import { env } from "@/lib/env";
 import { sendMessage } from "@/lib/helena";
 import prisma from "@/lib/prisma";
-import { scheduleUrlCall } from "@/lib/scheduler";
 import { buildConfirmationMessage, sendMessageToSupplier } from "@/lib/zapi";
-import { format, subSeconds } from "date-fns";
+import { format } from "date-fns";
 import createHttpError from "http-errors";
 import { NextRequest, NextResponse } from "next/server";
 import { NewWhatsAppButtonCallback } from "./type";
@@ -50,8 +48,7 @@ async function handleCancelOrder(panelId: string, phone: string) {
             in: [
               OrderStatus.PENDING_WAITING,
               OrderStatus.PENDING_PREPARATION,
-              OrderStatus.PRODUCING_PREPARATION,
-              OrderStatus.PRODUCING_CONFIRMATION,
+              OrderStatus.PRODUCING,
               OrderStatus.DELIVERING_ON_ROUTE,
             ],
           },
@@ -69,7 +66,7 @@ async function handleCancelOrder(panelId: string, phone: string) {
     const order = await tx.order.update({
       where: { id: supplierPanel.orderId },
       data: { orderStatus: OrderStatus.PENDING_CANCELLED },
-      include: { contact: true, product: true },
+      include: { contact: true },
     });
 
     return { order };
@@ -104,26 +101,12 @@ async function handleApproveOrder(panelId: string, phone: string) {
 
     const order = await tx.order.update({
       where: { id: supplierPanel.orderId },
-      data: { orderStatus: OrderStatus.PRODUCING_PREPARATION },
-      include: { contact: true, product: true },
+      data: { orderStatus: OrderStatus.PRODUCING },
+      include: { contact: true },
     });
 
     return { order };
   });
-
-  const triggerAt = subSeconds(order.deliveryUntil, 1800);
-
-  try {
-    await scheduleUrlCall({
-      triggerAt,
-      url: `${env.NEXT_PUBLIC_WEBSITE_URL}/api/webhooks/orders/warn-late-photo`,
-      data: {
-        panelId,
-      },
-    });
-  } catch (e: any) {
-    console.error("Erro ao cadastrar scheduler", e.response?.data || e);
-  }
 
   try {
     const message = buildConfirmationMessage({
@@ -132,9 +115,6 @@ async function handleApproveOrder(panelId: string, phone: string) {
       honoreeName: order.honoreeName,
       deliveryLocal: `${order.deliveryAddress || ""}`,
       time: format(order.deliveryUntil, "dd/MM/yyyy HH:mm"),
-      tributeCardPhrase: order.tributeCardPhrase,
-      productName: order.product.name,
-      size: order.product.size,
       supplierNote: order.supplierNote,
     });
 

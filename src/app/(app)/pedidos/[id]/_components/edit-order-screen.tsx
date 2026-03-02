@@ -150,8 +150,7 @@ const EditOrderScreen = ({ order }: Props) => {
   };
 
   const hasSupplier =
-    order.orderStatus === OrderStatus.PRODUCING_PREPARATION ||
-    order.orderStatus === OrderStatus.PRODUCING_CONFIRMATION ||
+    order.orderStatus === OrderStatus.PRODUCING ||
     order.orderStatus === OrderStatus.DELIVERING_ON_ROUTE ||
     order.orderStatus === OrderStatus.DELIVERING_DELIVERED ||
     order.orderStatus === OrderStatus.FINALIZED;

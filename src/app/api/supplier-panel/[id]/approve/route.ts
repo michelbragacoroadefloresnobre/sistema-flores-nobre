@@ -23,7 +23,7 @@ export const POST = createRoute(async (req, { params }) => {
         throw new createHttpError.BadRequest("Este pedido já foi processado");
 
       await tx.order.updateMany({
-        data: { orderStatus: OrderStatus.PRODUCING_PREPARATION },
+        data: { orderStatus: OrderStatus.PRODUCING },
         where: {
           supplierPanels: { some: { id: params.id } },
         },
