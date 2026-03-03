@@ -21,8 +21,8 @@ model Contact {
   addressNumber     String
   addressComplement String
   neighboorhood     String
-  ibge              String
-  city              City       @relation(fields: [ibge], references: [ibge])
+  ibge              String?
+  city              City?       @relation(fields: [ibge], references: [ibge])
   orders            Order[]
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
@@ -50,6 +50,7 @@ model ProductVariant {
   size          ProductSize
   price         Decimal?       @db.Decimal(10, 2)
   imageUrl      String
+  siteId        String?        @unique
   createdAt     DateTime       @default(now())
   orderProducts OrderProduct[]
 
@@ -145,16 +146,16 @@ model SupplierPanelPhoto {
 }
 
 model Order {
-  id                        String          @id @default(cuid())
+  id                        String                @id @default(cuid())
   contactOrigin             ContactOrigin
   orderStatus               OrderStatus
   deliveryPeriod            DeliveryPeriod
   deliveryUntil             DateTime
   formId                    String
-  form                      Form            @relation(fields: [formId], references: [id])
+  form                      Form                  @relation(fields: [formId], references: [id])
   userId                    String
-  user                      User            @relation(fields: [userId], references: [id])
-  isWaited                  Boolean         @default(false)
+  user                      User                  @relation(fields: [userId], references: [id])
+  isWaited                  Boolean               @default(false)
   woocommerceId             String?
   internalNote              String?
   honoreeName               String
@@ -165,15 +166,16 @@ model Order {
   deliveryAddressNumber     String?
   deliveryAddressComplement String?
   deliveryNeighboorhood     String
-  ibge                      String
-  city                      City            @relation(fields: [ibge], references: [ibge])
+  ibge                      String?
+  city                      City?                  @relation(fields: [ibge], references: [ibge])
   supplierNote              String
   contactId                 String
-  contact                   Contact         @relation(fields: [contactId], references: [id])
+  contact                   Contact               @relation(fields: [contactId], references: [id])
   payments                  Payment[]
+  supplierPaymentStatus     SupplierPaymentStatus
   supplierPanels            SupplierPanel[]
-  createdAt                 DateTime        @default(now())
-  updatedAt                 DateTime        @updatedAt
+  createdAt                 DateTime              @default(now())
+  updatedAt                 DateTime              @updatedAt
   auditLogs                 AuditLog[]
   orderProducts             OrderProduct[]
 
@@ -367,6 +369,7 @@ enum FormStatus {
 enum ContactOrigin {
   WHATSAPP
   PHONE
+  SITE
   NONE
 }
 
@@ -437,6 +440,11 @@ enum SupplierPanelStatus {
   CANCELLED
 }
 
+enum SupplierPaymentStatus {
+  WAITING
+  PAID
+}
+
 enum Role {
   OWNER
   ADMIN
@@ -492,4 +500,9 @@ enum WeekDay {
   FRIDAY
   SATURDAY
   SUNDAY
+}
+
+enum Channel {
+  FLORES_NOBRE
+  COROAS_NOBRE
 }

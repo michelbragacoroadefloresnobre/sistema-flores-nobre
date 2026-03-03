@@ -12,7 +12,7 @@ export default async function AppLayout({
     headers: await headers(),
   });
 
-  if (!session) return redirect("/auth/login");
+ if (!session) return redirect("/auth/login");
 
   return (
     <div className="h-full">

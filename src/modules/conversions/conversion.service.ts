@@ -14,7 +14,7 @@ export async function sendInitialTemplate({
   formId: string;
 }) {
   const message = await sendMessageSync(phone, "🌹");
-
+  console.log(formId)
   let sessionId: string | undefined = undefined;
 
   console.info(`Mensagem enviada para o numero ${phone}:`);
@@ -42,6 +42,8 @@ export async function sendInitialTemplate({
           formId: formId,
         },
       });
+
+      break;
     }
     case "QUEUED": {
       await cancelMessage(message.id);
@@ -76,6 +78,8 @@ export async function sendInitialTemplate({
           formId: formId,
         },
       });
+
+      break;
     }
     default:
       throw new createHttpError.BadRequest("Status desconhecido");

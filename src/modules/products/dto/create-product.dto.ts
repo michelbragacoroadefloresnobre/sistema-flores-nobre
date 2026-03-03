@@ -5,6 +5,7 @@ export const productVariationSchema = z.object({
   size: z.enum(ProductSize),
   color: z.enum(ProductColor),
   price: z.string(),
+  siteId: z.string(),
   imageUrl: z.url(),
 });
 

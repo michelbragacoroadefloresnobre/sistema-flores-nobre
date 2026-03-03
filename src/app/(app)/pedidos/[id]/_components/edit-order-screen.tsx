@@ -68,9 +68,9 @@ const EditOrderScreen = ({ order }: Props) => {
       deliveryAddressNumber: order.deliveryAddressNumber || "",
       deliveryAddressComplement: order.deliveryAddressComplement || "",
       deliveryNeighboorhood: order.deliveryNeighboorhood || "",
-      deliveryIbge: order.city.ibge || "",
-      deliveryCity: order.city.name || "",
-      deliveryUf: order.city.uf || ("" as any),
+      deliveryIbge: order.city?.ibge || "",
+      deliveryCity: order.city?.name || "",
+      deliveryUf: order.city?.uf || ("" as any),
 
       customerName: order.contact.name || "",
       customerLegalName: order.contact.legalName || "",
@@ -87,8 +87,8 @@ const EditOrderScreen = ({ order }: Props) => {
       customerAddressComplement: order.contact.addressComplement || "",
       customerNeighboorhood: order.contact.neighboorhood || "",
       customerIbge: order.contact.ibge || "",
-      customerCity: order.contact.city.name || "",
-      customerUf: order.contact.city.uf || ("" as any),
+      customerCity: order.contact.city?.name || "",
+      customerUf: order.contact.city?.uf || ("" as any),
 
       productVariants: Object.values(
         order.orderProducts.reduce((acc, or) => {

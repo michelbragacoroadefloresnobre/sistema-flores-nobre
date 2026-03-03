@@ -1,6 +1,7 @@
 import axios from "axios";
 import createHttpError from "http-errors";
 import { ListConversationsResponse, ListMessagesResponse } from "./types";
+import { CHANNEL_PHONES } from "../constants";
 
 const chatApi = axios.create({
   baseURL: "https://api.helena.run/chat/v1",
@@ -65,7 +66,7 @@ export async function sendMessageSync(
   fileUrl?: string,
 ) {
   const fetchResponse = await chatApi.post("/message/send-sync", {
-    from: "558000020001",
+    from: CHANNEL_PHONES.FLORES_NOBRE,
     to: number,
     body: {
       text: message,
@@ -102,7 +103,7 @@ export async function sendTemplateSync(
   forceStartSession?: boolean,
 ) {
   const body: any = {
-    from: "558000020001",
+    from: CHANNEL_PHONES.FLORES_NOBRE,
     to: number,
     body: {
       templateId,
@@ -130,7 +131,7 @@ export async function sendTemplate(data: {
   forceStartSession?: boolean;
 }) {
   const body: any = {
-    from: "558000020001",
+    from: CHANNEL_PHONES.FLORES_NOBRE,
     to: data.number,
     body: {
       templateId: data.templateId,
@@ -161,7 +162,7 @@ export async function sendMessage(
   fileUrl?: string,
 ) {
   const fetchResponse = await chatApi.post("/message/send", {
-    from: "558000020001",
+    from: CHANNEL_PHONES.FLORES_NOBRE,
     to: number,
     body: {
       text: message,

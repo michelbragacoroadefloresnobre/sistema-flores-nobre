@@ -8,6 +8,7 @@ export interface VariationRow {
   color: ProductColor;
   price: string;
   label: string;
+  siteId: string;
   imageUrl?: string;
 }
 
@@ -30,6 +31,7 @@ export function useCartesianMatrix(
           color,
           label,
           price: "",
+          siteId: "",
           imageUrl: "",
         });
       }
