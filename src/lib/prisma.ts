@@ -10,9 +10,12 @@ const globalForPrisma = global as unknown as {
 const adapter = new PrismaPg(
   new Pool({
     connectionString: env.DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false,
-    },
+    ssl:
+      env.DISABLE_SSL === "true"
+        ? undefined
+        : {
+            rejectUnauthorized: false,
+          },
   }),
 );
 

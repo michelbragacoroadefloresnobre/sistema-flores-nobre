@@ -20,6 +20,7 @@ export const env = createEnv({
     ZAPI_TOKEN: z.string().min(1),
 
     N8N_URL: z.url(),
+    DISABLE_SSL: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_WEBSITE_URL: z.string().min(1),
