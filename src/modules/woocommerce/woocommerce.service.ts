@@ -1,15 +1,20 @@
 import prisma from "@/lib/prisma";
 import {
   ContactOrigin,
+  FormStatus,
+  FormType,
   OrderStatus,
+  PaymentStatus,
+  PaymentType,
   Prisma,
   Role,
   SupplierPaymentStatus,
 } from "@/generated/prisma/client";
 import z from "zod";
-import createHttpError from "http-errors";
+import createHttpError, { isHttpError } from "http-errors";
 import { Contact } from "lucide-react";
 import { createCityIfNotExists } from "../cities/city.service";
+import { sendInitialTemplate } from "../conversions/conversion.service";
 
 // ---------------------------------------------------------------------------
 // Schemas
@@ -122,10 +127,6 @@ const DELIVERY_PERIOD_MAP: Record<
   noite: "EVENING",
 };
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 function getMeta(metaData: WooOrderEvent["meta_data"], key: string) {
   return metaData.find((m) => m.key === key)?.value ?? null;
 }
@@ -170,10 +171,6 @@ async function resolveCity(
   return city;
 }
 
-// ---------------------------------------------------------------------------
-// Main handler
-// ---------------------------------------------------------------------------
-
 export async function handleWooOrderCreated(event: WooOrderEvent) {
   const { billing, shipping, status, line_items, meta_data, payment_method } =
     event;
@@ -185,9 +182,7 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
     "",
   );
 
-  return prisma.$transaction(async (tx) => {
-    // ----- Contact ----------------------------------------------------------
-
+  const order = await prisma.$transaction(async (tx) => {
     const contactConditions: Prisma.ContactWhereInput[] = [];
     if (email) contactConditions.push({ email });
     if (phone) contactConditions.push({ phone });
@@ -218,7 +213,9 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
       });
     } else {
       contact = await tx.contact.create({
-        data: billingCity?.ibge ? { ...contactData, city: { connect: { ibge: billingCity?.ibge } } } : contactData,
+        data: billingCity?.ibge
+          ? { ...contactData, city: { connect: { ibge: billingCity?.ibge } } }
+          : contactData,
       });
     }
 
@@ -226,8 +223,8 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
 
     const form = await tx.form.create({
       data: {
-        type: "SITE_SALE",
-        status: "CONVERTED",
+        type: FormType.SITE_SALE,
+        status: FormStatus.CONVERTED,
         name: contact.name,
         email: contact.email,
         phone: contact.phone,
@@ -255,7 +252,10 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
 
     const defaultUser =
       (await tx.user.findFirst({
-        where: { name: { equals: "Site", mode: "insensitive" }, role: Role.ADMIN },
+        where: {
+          name: { equals: "Site", mode: "insensitive" },
+          role: Role.ADMIN,
+        },
         select: { id: true },
       })) ??
       (await tx.user.findFirst({
@@ -329,9 +329,9 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
     const paymentStatus =
       status === "on-hold" || status === "processing"
         ? isPaid
-          ? "PAID"
-          : "ACTIVE"
-        : "CANCELLED";
+          ? PaymentStatus.PAID
+          : PaymentStatus.ACTIVE
+        : PaymentStatus.CANCELLED;
 
     await tx.payment.create({
       data: {
@@ -340,7 +340,7 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
         type: paymentType,
         isSiteSale: true,
         orderId: order.id,
-        paidAt: paymentStatus === "PAID" ? new Date() : null,
+        paidAt: paymentStatus === PaymentStatus.PAID ? new Date() : null,
       },
     });
 
@@ -367,4 +367,13 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
 
     return order;
   });
+
+  try {
+    await sendInitialTemplate({ phone, formId: order.formId });
+  } catch (e) {
+    if (isHttpError(e)) console.warn(e.message);
+    else console.error("Erro ao enviar mensagem:", e);
+  }
+
+  return order;
 }
