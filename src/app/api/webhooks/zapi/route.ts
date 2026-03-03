@@ -10,9 +10,9 @@ import { NewWhatsAppButtonCallback } from "./type";
 export async function POST(req: NextRequest) {
   const body: NewWhatsAppButtonCallback | undefined = await req.json();
 
+  console.log(JSON.stringify(body, null, 2));
   if (!body) return new NextResponse(null);
 
-  console.log(JSON.stringify(body, null, 2));
 
   const buttonId = body.buttonsResponseMessage?.buttonId;
   if (!buttonId) return new NextResponse(null);

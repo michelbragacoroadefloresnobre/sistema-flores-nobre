@@ -6,6 +6,7 @@ import {
   OrderStatus,
   PaymentType,
   Prisma,
+  SupplierPaymentStatus,
 } from "@/generated/prisma/client";
 import { SP_TIMEZONE } from "@/lib/env";
 import { createRoute } from "@/lib/handler/route-handler";
@@ -147,6 +148,7 @@ export const POST = createRoute(
           tributeCardPhrase: body.tributeCardPhrase,
           tributeCardType: body.tributeCardType,
           supplierNote: body.supplierNote,
+          supplierPaymentStatus: SupplierPaymentStatus.WAITING,
           contactId: contact.id,
           deliveryAddress: body.deliveryAddress,
           deliveryZipCode: Number(body.deliveryZipCode),
