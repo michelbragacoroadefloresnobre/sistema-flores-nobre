@@ -348,34 +348,6 @@ export function CreateOrderFormSectionDetails({
               </FormItem>
             )}
           />
-
-          <FormField
-            control={form.control}
-            name="isWaited"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>
-                  Colocar em modo espera
-                  <b className="text-red-600">*</b>
-                </FormLabel>
-                <Select
-                  value={String(field.value)}
-                  onValueChange={(v) => field.onChange(v === "true")}
-                >
-                  <FormControl className="w-full">
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a opção..." />
-                    </SelectTrigger>
-                  </FormControl>
-
-                  <SelectContent>
-                    <SelectItem value="true">Sim</SelectItem>
-                    <SelectItem value="false">Não</SelectItem>
-                  </SelectContent>
-                </Select>
-              </FormItem>
-            )}
-          />
         </div>
 
         <FormField
