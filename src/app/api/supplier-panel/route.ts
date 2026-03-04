@@ -7,9 +7,12 @@ import { env } from "@/lib/env";
 import { createRoute } from "@/lib/handler/route-handler";
 import prisma from "@/lib/prisma";
 import { scheduleUrlCall } from "@/lib/scheduler";
+import { getVariantLabel } from "@/lib/utils";
 import {
+  buildItemMessage,
   buildRequestMessage,
   sendMessageToSupplierWithButtons,
+  sendPhotoToSupplier,
 } from "@/lib/zapi";
 import { format } from "date-fns";
 import createHttpError from "http-errors";
@@ -20,7 +23,17 @@ export const POST = createRoute(
   async (req, { body }) => {
     const { supplierId, orderId } = body;
 
+    const orderProducts = await prisma.orderProduct.findMany({
+        where: {
+          orderId: orderId,
+        },
+        include: {
+          variant: { include: { product: true } },
+        },
+      });
+
     const { supplierPanel, order } = await prisma.$transaction(async (tx) => {
+      
       const orders = await tx.order.updateManyAndReturn({
         data: { orderStatus: OrderStatus.PENDING_WAITING },
         where: {
@@ -36,16 +49,7 @@ export const POST = createRoute(
 
       const order = orders[0];
       if (!order)
-        throw new createHttpError.BadRequest("Operação não disponivel");
-
-      const orderProducts = await tx.orderProduct.findMany({
-        where: {
-          orderId: order.id,
-        },
-        include: {
-          variant: { include: { product: true } },
-        },
-      });
+        throw new createHttpError.BadRequest("Operação não disponivel");     
 
       const coverageArea = await tx.coverageArea.findFirst({
         where: {
@@ -127,7 +131,7 @@ export const POST = createRoute(
     });
 
     try {
-      await sendMessageToSupplierWithButtons(
+      const messageWithBUttonsResponse = await sendMessageToSupplierWithButtons(
         supplierPanel.supplier.jid,
         message,
         [
@@ -141,6 +145,11 @@ export const POST = createRoute(
           },
         ],
       );
+
+      orderProducts.forEach(async (op) => {
+        const itemMessage = buildItemMessage({ itemName: `${op.variant.product.name} - ${getVariantLabel({ size: op.variant.size, color: op.variant.color })}` }); 
+        await sendPhotoToSupplier(supplierPanel.supplier.jid, itemMessage, op.variant.imageUrl, messageWithBUttonsResponse.messageId)
+      });
     } catch (e: any) {
       console.error(
         "Erro ao enviar mensagem de aceite para fornecedor:",

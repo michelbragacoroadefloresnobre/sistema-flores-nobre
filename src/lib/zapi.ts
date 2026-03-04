@@ -91,6 +91,36 @@ export const sendMessageToSupplier = async (
   return fetchResponse.data;
 };
 
+export const sendPhotoToSupplier = async (
+  numberOrGroupId: string | null,
+  message: string,
+  imageUrl: string,
+  firstMessageId: string,
+) => {
+  const token = env.ZAPI_TOKEN;
+  const instance = env.ZAPI_INSTANCE;
+  const client_token = env.ZAPI_CLIENT_TOKEN;
+
+  if (!token || !instance || !client_token) {
+    throw new Error("Z-Api token or instance is not set");
+  }
+
+  const config = { headers: { "client-token": client_token } };
+
+  const fetchResponse = await axios.post(
+    `https://api.z-api.io/instances/${instance}/token/${token}/send-image`,
+    {
+      phone: numberOrGroupId || env.NEXT_PUBLIC_INTERNAL_SUPPLIER_JID,
+      image: imageUrl,
+      caption: message,
+      messageId: firstMessageId,
+    },
+    config,
+  );
+
+  return fetchResponse.data;
+};
+
 export const buildRequestMessage = (data: {
   orderId: string;
   deliveryLocal: string;
@@ -147,5 +177,13 @@ PEDIDO 📦 *#NOBRE${data.orderId}*
 ${env.NEXT_PUBLIC_WEBSITE_URL}/painel/${data.panelId}
 `;
 
+  return message;
+};
+
+export const buildItemMessage = (data: { itemName: string }) => {
+  const message = `
+  🌹 Modelo: 
+  *${data.itemName}*
+  `;
   return message;
 };
