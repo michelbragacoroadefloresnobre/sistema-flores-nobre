@@ -346,37 +346,8 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
         paidAt: paymentStatus === PaymentStatus.PAID ? new Date() : null,
       },
     });
-
-    // ----- Audit logs -------------------------------------------------------
-
-    await tx.auditLog.createMany({
-      data: [
-        {
-          type: "CREATION",
-          author: "Site",
-          action: "Cliente comprou pelo site",
-          description: `Pedido ${order.id} formalizado pelo site`,
-          orderId: order.id,
-        },
-        {
-          type: "STATUS_CHANGE",
-          author: "Site",
-          action: "Pagamento criado",
-          description: `Pagamento de R$ ${totalAmount.toFixed(2)} gerado pelo site`,
-          orderId: order.id,
-        },
-      ],
-    });
-
     return order;
   });
-
-  try {
-    await sendInitialTemplate({ phone, formId: order.formId });
-  } catch (e) {
-    if (isHttpError(e)) console.warn(e.message);
-    else console.error("Erro ao enviar mensagem:", e);
-  }
 
   return order;
 }

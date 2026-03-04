@@ -173,6 +173,7 @@ export function PaymentsSectionActionButtons({
                     <Button
                       variant="destructive"
                       size="icon"
+                      type="button"
                       className="absolute top-2 right-2 h-6 w-6"
                       onClick={handleRemoveImage}
                     >
@@ -219,6 +220,7 @@ export function PaymentsSectionActionButtons({
             <div className="flex gap-2">
               <Button
                 className="flex-1"
+                type="button"
                 onClick={handleConfirm}
                 disabled={
                   !!payment.proofOfPaymentUrl || !imagePreview || isUploading
@@ -234,6 +236,7 @@ export function PaymentsSectionActionButtons({
               <Button
                 variant="outline"
                 className="flex-1"
+                type="button"
                 onClick={handleCopy}
                 disabled={!payment.text}
               >
@@ -274,6 +277,7 @@ export function PaymentsSectionActionButtons({
           <Button
             variant="ghost"
             size="icon"
+            type="button"
             onClick={() => submitPaidPayment()}
             disabled={
               payment.status !== PaymentStatus.ACTIVE || isSubmittingPaidStatus
@@ -345,6 +349,7 @@ export function PaymentsSectionActionButtons({
           <Button
             variant="ghost"
             size="icon"
+            type="button"
             disabled={
               !(payment.text || payment.url) ||
               payment.status !== PaymentStatus.ACTIVE
@@ -518,6 +523,7 @@ export function PaymentsSectionActionButtons({
           size={"icon"}
           variant={"ghost"}
           disabled={!canCancelPayment()}
+          type="button"
           onClick={() => {
             setCancelDialogOpen(true);
           }}
