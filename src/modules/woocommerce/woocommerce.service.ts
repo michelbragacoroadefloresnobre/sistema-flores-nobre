@@ -15,6 +15,7 @@ import createHttpError, { isHttpError } from "http-errors";
 import { Contact } from "lucide-react";
 import { createCityIfNotExists } from "../cities/city.service";
 import { sendInitialTemplate } from "../conversions/conversion.service";
+import { subDays } from "date-fns";
 
 // ---------------------------------------------------------------------------
 // Schemas
@@ -221,7 +222,17 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
 
     // ----- Form -------------------------------------------------------------
 
-    const form = await tx.form.create({
+    let form = await prisma.form.updateManyAndReturn({
+      data: {status: FormStatus.CONVERTED},
+      where:{
+        phone: contact.phone,
+        status: { not: FormStatus.CONVERTED},
+        createdAt: {gte: subDays(new Date(), 1)}
+      }
+    }).then(data => data[0])
+
+    if (!form)
+    form = await tx.form.create({
       data: {
         type: FormType.SITE_SALE,
         status: FormStatus.CONVERTED,
@@ -275,7 +286,7 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
 
     const order = await tx.order.create({
       data: {
-        contactOrigin: ContactOrigin.SITE,
+        contactOrigin: ContactOrigin.NONE,
         orderStatus: OrderStatus.PENDING_PREPARATION,
         deliveryPeriod,
         deliveryUntil: deliveryDate,
@@ -348,6 +359,7 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
     });
     return order;
   });
+
 
   return order;
 }
