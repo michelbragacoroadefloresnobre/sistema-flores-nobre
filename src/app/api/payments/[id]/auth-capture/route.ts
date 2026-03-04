@@ -24,7 +24,6 @@ export const POST = createRoute(
       include: {
         order: {
           include: {
-            product: true,
             contact: { include: { city: true } },
           },
         },
@@ -34,6 +33,11 @@ export const POST = createRoute(
     try {
       const installments = Number(body.installments);
       const contact = payment.order.contact;
+
+      if (!contact.city)
+        throw new createHttpError.BadRequest(
+          "Cidade do contato não cadastrada",
+        );
 
       const paymentPayload = Pagarme.buildOrderPayload({
         id,
@@ -55,7 +59,7 @@ export const POST = createRoute(
           state: contact.city.uf,
         },
         value: Number(payment.amount),
-        product: payment.order.product.name,
+        product: "Flores",
         paymentMethod: "credit_card",
         card: {
           cardName: body.cardName,

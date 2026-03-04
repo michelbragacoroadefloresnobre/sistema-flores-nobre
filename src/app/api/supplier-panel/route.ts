@@ -72,9 +72,13 @@ export const POST = createRoute(
         },
       });
 
-      const totalCost = supplierProducts.reduce((total, sp) => {
-        const amount = Number(sp.amount) || 0;
-        return total + amount;
+      const totalCost = orderProducts.reduce((total, op) => {
+        const sp = supplierProducts.find(
+          (sp) =>
+            sp.productId === op.variant.productId &&
+            sp.size === op.variant.size,
+        );
+        return total + (Number(sp?.amount) || 0);
       }, 0);
 
       const expiresIn = 10;

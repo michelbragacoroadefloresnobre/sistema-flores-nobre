@@ -161,7 +161,7 @@ async function resolveCity(
   uf: string,
 ) {
   const where: Prisma.CityWhereInput = {
-    name: { contains: cityName || "", mode: "insensitive" },
+    name: { contains: cityName, mode: "insensitive" },
     ...(VALID_UFS.has(uf.toUpperCase()) ? { uf: uf.toUpperCase() as any } : {}),
   };
 
@@ -233,7 +233,7 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
 
     // ----- Delivery info ----------------------------------------------------
 
-    const deliveryCity = await resolveCity(tx, shipping.city, shipping.state);
+    const deliveryCity = await resolveCity(tx, shipping.city ? shipping.city : billing.city, shipping.state ? shipping.state : billing.state);
     const deliveryDate = parseDeliveryDate(
       getMeta(meta_data, "_delivery_date"),
     );

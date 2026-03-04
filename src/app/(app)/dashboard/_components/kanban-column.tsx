@@ -24,11 +24,11 @@ export function KanbanColumn<
   return (
     <Card
       className={cn(
-        "overflow-hidden rounded-xl border-border bg-card shadow-sm pt-0",
+        "flex flex-col overflow-hidden rounded-xl border-border bg-card shadow-sm pt-0",
         className,
       )}
     >
-      <CardHeader className="relative flex flex-auto shrink-0 grow-0 flex-row items-center justify-between bg-muted/50 py-6 text-muted-foreground">
+      <CardHeader className="sticky top-0 z-10 flex flex-auto shrink-0 grow-0 flex-row items-center justify-between bg-muted/50 py-6 text-muted-foreground">
         <CardTitle className="font-bold text-foreground">
           {title}{" "}
           <span className="ml-1 font-normal text-muted-foreground">
@@ -50,7 +50,7 @@ export function KanbanColumn<
           </div>
         </div>
       </CardHeader>
-      <CardContent className="scrollbar flex-auto shrink-0 grow-0 overflow-y-scroll px-4">
+      <CardContent className="scrollbar flex-1 overflow-y-scroll px-4 min-h-0">
         <div className="space-y-2">
           {items.map((item, index) => renderItem(item, index))}
         </div>
