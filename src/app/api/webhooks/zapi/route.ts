@@ -112,7 +112,9 @@ async function handleApproveOrder(panelId: string, phone: string) {
     const message = buildConfirmationMessage({
       panelId,
       orderId: order.id,
+      senderName: order.senderName,
       honoreeName: order.honoreeName,
+      tributeCardPhrase: order.tributeCardPhrase || "",
       deliveryLocal: `${order.deliveryAddress || ""}`,
       time: format(order.deliveryUntil, "dd/MM/yyyy HH:mm"),
       supplierNote: order.supplierNote,

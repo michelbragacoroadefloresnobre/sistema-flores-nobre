@@ -233,7 +233,11 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
 
     // ----- Delivery info ----------------------------------------------------
 
-    const deliveryCity = await resolveCity(tx, shipping.city ? shipping.city : billing.city, shipping.state ? shipping.state : billing.state);
+    const deliveryCity = await resolveCity(
+      tx,
+      shipping.city ? shipping.city : billing.city,
+      shipping.state ? shipping.state : billing.state,
+    );
     const deliveryDate = parseDeliveryDate(
       getMeta(meta_data, "_delivery_date"),
     );
@@ -279,10 +283,9 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
         userId: defaultUser.id,
         woocommerceId: event.id?.toString(),
         honoreeName,
+        senderName: tributeCardFrom,
         tributeCardPhrase,
-        tributeCardType: giftOption
-          ? tributeCardFrom || "Com Cartão"
-          : "Sem Cartão",
+        tributeCardType: giftOption ? "Com Cartão" : "Sem Cartão",
         deliveryZipCode: parseInt(
           shipping.postcode.replace(/\D/g, "") || "0",
           10,
