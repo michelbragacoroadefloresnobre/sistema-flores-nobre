@@ -42,6 +42,7 @@ import {
   User,
   XCircle,
 } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 export interface CompletedOrderItem {
@@ -110,9 +111,7 @@ const CompletedTable = ({
       orderIds: string[];
       supplierPaymentStatus: SupplierPaymentStatus;
     }) =>
-      axios
-        .patch("/api/tables/completed-orders", params)
-        .then((r) => r.data),
+      axios.patch("/api/tables/completed-orders", params).then((r) => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
       setSelectedOrders([]);
@@ -177,7 +176,9 @@ const CompletedTable = ({
             variant="outline"
             size="sm"
             className="gap-2 border-success/30 text-success hover:bg-success/10 hover:text-success"
-            disabled={selectedOrders.length === 0 || updateSupplierPayment.isPending}
+            disabled={
+              selectedOrders.length === 0 || updateSupplierPayment.isPending
+            }
             onClick={handleMarkAsPaid}
           >
             <CheckCircle className="h-4 w-4" />
@@ -187,7 +188,9 @@ const CompletedTable = ({
             variant="outline"
             size="sm"
             className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
-            disabled={selectedOrders.length === 0 || updateSupplierPayment.isPending}
+            disabled={
+              selectedOrders.length === 0 || updateSupplierPayment.isPending
+            }
             onClick={handleMarkAsUnpaid}
           >
             <XCircle className="h-4 w-4" />
@@ -256,9 +259,7 @@ const CompletedTable = ({
               </TableRow>
             ) : (
               currentOrders.map((order) => {
-                const clientColor = getClientPaymentColor(
-                  order.paymentStatus,
-                );
+                const clientColor = getClientPaymentColor(order.paymentStatus);
                 const supplierColor = getSupplierPaymentColor(
                   order.supplierPaymentStatus,
                 );
@@ -339,7 +340,9 @@ const CompletedTable = ({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
-                          <DropdownMenuItem>Editar Pedido</DropdownMenuItem>
+                          <Link href={`/pedidos/${order.id}`}>
+                            <DropdownMenuItem>Editar Pedido</DropdownMenuItem>
+                          </Link>
                           <DropdownMenuItem>Exportar</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

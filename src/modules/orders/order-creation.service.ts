@@ -97,7 +97,7 @@ export async function createPayment({
         type: body.type,
         amount: body.amount,
         orderId: body.orderId,
-        status: PaymentStatus.PROCESSING,
+        status: PaymentStatus.ACTIVE,
         boletoDueAt:
           body.type === PaymentType.BOLETO ? body.boletoDue : undefined,
         externalId: paymentData.id,
