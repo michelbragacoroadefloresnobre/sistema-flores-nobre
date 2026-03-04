@@ -6,13 +6,16 @@ import {
   createPayment,
   notifyPayment,
 } from "@/modules/payments/payment.service";
+import createHttpError from "http-errors";
 
 export const POST = createRoute(
   async (req, { body }) => {
     const order = await prisma.order.findUniqueOrThrow({
       where: { id: body.orderId },
-      include: { product: true, contact: { include: { city: true } } },
+      include: { contact: { include: { city: true } } },
     });
+
+    if(!order.contact.city) throw new createHttpError.BadRequest("Cidade do contato não cadastrada");
 
     const { payment } = await createPayment({
       body: {
@@ -22,7 +25,7 @@ export const POST = createRoute(
         status: PaymentStatus.ACTIVE,
         boletoDue:
           body.paymentType === PaymentType.BOLETO ? body.boletoDue : undefined,
-        productName: order.product.name,
+        productName: 'Flores',
       },
       customer: order.contact,
       city: order.contact.city,
@@ -33,7 +36,6 @@ export const POST = createRoute(
         payment,
         order,
         customer: order.contact,
-        product: order.product,
       });
     } catch (e) {
       console.error("Erro ao enviar mensagem para o cliente:", e);
