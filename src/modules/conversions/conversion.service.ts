@@ -14,7 +14,7 @@ export async function sendInitialTemplate({
   formId: string;
 }) {
   const message = await sendMessageSync(phone, "🌹");
-  console.log(formId)
+  console.log(formId);
   let sessionId: string | undefined = undefined;
 
   console.info(`Mensagem enviada para o numero ${phone}:`);
@@ -55,7 +55,7 @@ export async function sendInitialTemplate({
       if (isValidUUID(template.sessionId)) sessionId = template.sessionId;
       else if (isValidUUID(message.sessionId)) sessionId = message.sessionId;
 
-      const cm = await prisma.conversionMessage.create({
+      await prisma.conversionMessage.create({
         data: {
           sessionId,
           externalId: template.id,
@@ -68,7 +68,7 @@ export async function sendInitialTemplate({
         triggerIn: 5 * 60,
         url: `${env.NEXT_PUBLIC_WEBSITE_URL}/api/webhooks/conversions/second-attempt`,
         data: {
-          messageId: cm.id,
+          formId,
         },
       });
       await scheduleUrlCall({

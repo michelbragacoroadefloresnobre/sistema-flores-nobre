@@ -34,12 +34,7 @@ export async function POST(request: NextRequest) {
       createdAfter: DateTime.now().minus({ day: 1 }).toISO(),
     }).then((res) => res.items);
 
-    if (sessions.length > 1) {
-      console.info("Atendimento iniciado");
-      return new NextResponse(null);
-    }
-
-    if (sessions.length > 1) {
+    if (sessions.length > 0) {
       const messagesRes = await Promise.all(
         sessions.map((s) => listMessages(s.id)),
       );
