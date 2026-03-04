@@ -11,4 +11,4 @@ DROP INDEX "unique_confirmed_panel_per_order";
 DROP INDEX "unique_waiting_panel_per_order";
 
 -- AlterTable
-ALTER TABLE "order" ADD COLUMN     "senderName" TEXT NOT NULL;
+ALTER TABLE "order" ADD COLUMN     "senderName" TEXT NOT NULL DEFAULT '';
