@@ -148,7 +148,9 @@ export const buildRequestMessage = (data: {
 export const buildConfirmationMessage = (data: {
   panelId: string;
   orderId: string;
+  senderName: string;
   honoreeName: string;
+  tributeCardPhrase: string;
   deliveryLocal: string;
   time: string;
   supplierNote: string | undefined;
@@ -170,6 +172,18 @@ PEDIDO 📦 *#NOBRE${data.orderId}*
     message += `
 📌 Observações:
 *${data.supplierNote}*
+`;
+
+  if (data.honoreeName)
+    message += `
+🎁 Nome do Remetente: 
+*${data.senderName}*
+
+🙇🏻‍♂️ Nome da Pessoa Homenageada: 
+*${data.honoreeName}*
+
+✉️ Frase de Homenagem: 
+*${data.tributeCardPhrase}*
 `;
 
   message += `
