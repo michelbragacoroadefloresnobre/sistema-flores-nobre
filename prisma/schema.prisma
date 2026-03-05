@@ -161,7 +161,6 @@ model Order {
   honoreeName               String
   senderName                String
   tributeCardPhrase         String?
-  tributeCardType           String
   deliveryZipCode           Int
   deliveryAddress           String
   deliveryAddressNumber     String?

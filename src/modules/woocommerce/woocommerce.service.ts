@@ -274,7 +274,7 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
         select: { id: true },
       })) ??
       (await tx.user.findFirst({
-        where: { role: "ADMIN" },
+        where: { role: { in: ["ADMIN", "OWNER"] } },
         select: { id: true },
       }));
     if (!defaultUser)
@@ -296,7 +296,6 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
         honoreeName,
         senderName: tributeCardFrom,
         tributeCardPhrase,
-        tributeCardType: giftOption ? "Com Cartão" : "Sem Cartão",
         deliveryZipCode: parseInt(
           shipping.postcode.replace(/\D/g, "") || "0",
           10,

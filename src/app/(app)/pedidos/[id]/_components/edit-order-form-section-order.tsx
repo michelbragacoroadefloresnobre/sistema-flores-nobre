@@ -86,7 +86,6 @@ export function EditOrderFormSectionOrder({
     const isValidated = await form.trigger([
       "honoreeName",
       "tributeCardPhrase",
-      "tributeCardType",
       "supplierNote",
     ]);
     if (isValidated) onComplete();
@@ -117,70 +116,43 @@ export function EditOrderFormSectionOrder({
             )}
           />
 
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="col-span-2">
-              <FormField
-                control={form.control}
-                name="tributeCardPhrase"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Cartão de Homenagem <b className="text-red-600">*</b>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Digite o cartão de homenagem"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-
+          <div className="grid md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="tributeCardType"
+              name="tributeCardPhrase"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Tipo de Cartão <b className="text-red-600">*</b>
+                    Cartão de Homenagem <b className="text-red-600">*</b>
                   </FormLabel>
-                  <Select
-                    onValueChange={(v) => field.onChange(v)}
-                    value={field.value}
-                  >
-                    <FormControl className="w-full">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Quem é o remetente da homenagem?" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="PJ">PJ</SelectItem>
-                      <SelectItem value="PF">PF</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl className="w-full">
+                    <Textarea
+                      maxLength={1024}
+                      {...field}
+                      placeholder="Feliz aniversário! Com carinho..."
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="supplierNote"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Observação para o Fornecedor</FormLabel>
+                  <FormControl className="w-full">
+                    <Textarea
+                      maxLength={255}
+                      {...field}
+                      placeholder="Adicionar flores do campo, 10cm..."
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />
           </div>
-
-          <FormField
-            control={form.control}
-            name="supplierNote"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Observação para o Fornecedor</FormLabel>
-                <FormControl className="w-full">
-                  <Textarea
-                    maxLength={255}
-                    {...field}
-                    placeholder="Adicionar flores do campo, 10cm..."
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
 
           <div className="grid grid-cols-2 gap-4">
             <FormField

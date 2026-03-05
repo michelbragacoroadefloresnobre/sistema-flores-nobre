@@ -86,7 +86,6 @@ export function CreateOrderFormSectionOrder({
     const isValidated = await form.trigger([
       "honoreeName",
       "tributeCardPhrase",
-      "tributeCardType",
       "supplierNote",
       "deliveryZipCode",
       "deliveryAddress",
@@ -133,9 +132,10 @@ export function CreateOrderFormSectionOrder({
                     Cartão de Homenagem <b className="text-red-600">*</b>
                   </FormLabel>
                   <FormControl className="w-full">
-                    <Input
+                    <Textarea
+                      maxLength={1024}
                       {...field}
-                      placeholder="Digite o cartão de homenagem"
+                      placeholder="Feliz aniversário! Com carinho..."
                     />
                   </FormControl>
                 </FormItem>
@@ -144,47 +144,21 @@ export function CreateOrderFormSectionOrder({
 
             <FormField
               control={form.control}
-              name="tributeCardType"
+              name="supplierNote"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    Tipo de Cartão <b className="text-red-600">*</b>
-                  </FormLabel>
-                  <Select
-                    onValueChange={(v) => field.onChange(v)}
-                    value={field.value}
-                  >
-                    <FormControl className="w-full">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Quem é o remetente da homenagem?" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="PJ">PJ</SelectItem>
-                      <SelectItem value="PF">PF</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>Observação para o Fornecedor</FormLabel>
+                  <FormControl className="w-full">
+                    <Textarea
+                      maxLength={255}
+                      {...field}
+                      placeholder="Adicionar flores do campo, 10cm..."
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />
           </div>
-
-          <FormField
-            control={form.control}
-            name="supplierNote"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Observação para o Fornecedor</FormLabel>
-                <FormControl className="w-full">
-                  <Textarea
-                    maxLength={255}
-                    {...field}
-                    placeholder="Adicionar flores do campo, 10cm..."
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
 
           <div className="grid grid-cols-2 gap-4">
             <FormField

@@ -48,9 +48,6 @@ export const createOrderSchema = z.object({
   tributeCardPhrase: z
     .string({ message: "Frase de homenagem é obrigatório" })
     .min(1, "Frase de homenagem é obrigatório!"),
-  tributeCardType: z.enum(PersonType, {
-    message: "Selecione se quem vai homenagear é PF ou PJ",
-  }),
   supplierNote: z.string(),
   deliveryZipCode: z.string().min(1),
   deliveryAddress: z.string().min(1),

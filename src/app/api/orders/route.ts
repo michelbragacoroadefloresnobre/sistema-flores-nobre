@@ -147,7 +147,6 @@ export const POST = createRoute(
           honoreeName: body.honoreeName,
           senderName: contact.name,
           tributeCardPhrase: body.tributeCardPhrase,
-          tributeCardType: body.tributeCardType,
           supplierNote: body.supplierNote,
           supplierPaymentStatus: SupplierPaymentStatus.WAITING,
           contactId: contact.id,

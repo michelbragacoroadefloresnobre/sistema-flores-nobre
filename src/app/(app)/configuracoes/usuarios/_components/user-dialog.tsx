@@ -159,7 +159,6 @@ export function UserDialog({ user }: { user?: User }) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value={Role.OWNER}>Super Admin</SelectItem>
                         <SelectItem value={Role.ADMIN}>Admin</SelectItem>
                         <SelectItem value={Role.SUPERVISOR}>
                           Supervisor
