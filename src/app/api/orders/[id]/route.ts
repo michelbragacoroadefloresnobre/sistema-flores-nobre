@@ -63,7 +63,6 @@ export const PUT = createRoute(
           internalNote: body.internalNote,
           honoreeName: body.honoreeName,
           tributeCardPhrase: body.tributeCardPhrase,
-          tributeCardType: body.tributeCardType,
           supplierNote: body.supplierNote,
           deliveryAddress: body.deliveryAddress,
           deliveryZipCode: Number(body.deliveryZipCode),

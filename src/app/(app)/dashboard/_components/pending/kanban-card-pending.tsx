@@ -15,6 +15,7 @@ import {
   ChevronDown,
   Edit,
   Info,
+  Rss,
   Snowflake,
   X,
 } from "lucide-react";
@@ -77,7 +78,7 @@ export function KanbanCardPending({ order }: { order: iOrderPending }) {
       queryClient.invalidateQueries({ queryKey: KANBAN_QUERY_KEY });
     }
   };
-
+  console.log(order);
   return (
     <div
       className={cn(
@@ -89,8 +90,13 @@ export function KanbanCardPending({ order }: { order: iOrderPending }) {
       <div className="flex flex-col py-2 px-6">
         {(order.orderStatus === OrderStatus.PENDING_CANCELLED ||
           order.orderStatus === OrderStatus.PENDING_WAITING ||
+          order.orderStatus === OrderStatus.PENDING_PREPARATION ||
           order.isWaited) && (
           <div className="flex items-center flex-wrap gap-2">
+            {order.woocommerceId !== undefined &&
+              order.orderStatus === OrderStatus.PENDING_PREPARATION && (
+                <BadgeStatus variant="warning" icon={Rss} label="Formalização Necessária" />
+              )}
             {order.isWaited && (
               <BadgeStatus icon={Snowflake} label="Em Espera" />
             )}

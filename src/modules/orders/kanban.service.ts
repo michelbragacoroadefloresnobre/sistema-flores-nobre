@@ -32,7 +32,12 @@ export const getPendingOrders = async (): Promise<iOrderPending[]> => {
       supplierPanels: {
         where: { status: SupplierPanelStatus.WAITING },
         include: {
-          supplier: { select: { name: true, jid: true } },
+          supplier: {
+            select: { name: true, jid: true },
+          },
+          supplierPanelPhotos: {
+            select: { status: true },
+          },
         },
       },
     },
@@ -45,6 +50,7 @@ export const getPendingOrders = async (): Promise<iOrderPending[]> => {
         deliveryPeriod: order.deliveryPeriod,
         deliveryUntil: order.deliveryUntil.toISOString(),
         isWaited: order.isWaited,
+        woocommerceId: order.woocommerceId ? order.woocommerceId : undefined,
         seller: { id: order.user.id, name: order.user.name },
         supplierPanel: order.supplierPanels[0]
           ? {

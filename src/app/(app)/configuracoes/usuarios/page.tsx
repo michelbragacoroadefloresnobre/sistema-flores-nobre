@@ -8,13 +8,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { User } from "@/generated/prisma/client";
+import { Role, User } from "@/generated/prisma/client";
 import prisma from "@/lib/prisma";
 import { serialize } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { UserDeleteButton } from "./_components/user-delete-button";
 import { UserDialog } from "./_components/user-dialog";
+import { authClient } from "@/lib/auth/client";
 
 export const revalidate = 0;
 
@@ -22,9 +23,7 @@ interface ProductsPageProps {
   searchParams: Promise<any>;
 }
 
-export default async function ProductsPage({
-  searchParams,
-}: ProductsPageProps) {
+export default async function ConfigPage({ searchParams }: ProductsPageProps) {
   const { page } = await searchParams;
   const PAGE_SIZE = 20;
   const currentPage = Number(page) || 1;
@@ -80,34 +79,36 @@ export default async function ProductsPage({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => (
-                <TableRow
-                  key={user.id}
-                  className="hover:bg-muted/50 transition-colors"
-                >
-                  <TableCell className="font-medium text-foreground pl-6">
-                    {user.name}
-                  </TableCell>
-                  <TableCell>
-                    <span className="inline-flex items-center rounded-md bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">
-                      {user.role}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right pr-4">
-                    <UserDialog user={user} />
-                    <UserDeleteButton userId={user.id} />
-                  </TableCell>
-                </TableRow>
-              ))}
-              {users.length === 0 && (
-                <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    className="h-32 text-center text-muted-foreground"
+              {users.map(
+                (user) => (
+                  <TableRow
+                    key={user.id}
+                    className="hover:bg-muted/50 transition-colors"
                   >
-                    Nenhum produto encontrado.
-                  </TableCell>
-                </TableRow>
+                    <TableCell className="font-medium text-foreground pl-6">
+                      {user.name}
+                    </TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center rounded-md bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">
+                        {user.role}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right pr-4">
+                      <UserDialog user={user} />
+                      <UserDeleteButton userId={user.id} />
+                    </TableCell>
+                  </TableRow>
+                ),
+                users.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={4}
+                      className="h-32 text-center text-muted-foreground"
+                    >
+                      Nenhum produto encontrado.
+                    </TableCell>
+                  </TableRow>
+                ),
               )}
             </TableBody>
           </Table>

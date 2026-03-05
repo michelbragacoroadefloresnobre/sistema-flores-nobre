@@ -47,7 +47,6 @@ const CreateOrder = ({ serverData, phone }: Props) => {
       // Pedido
       honoreeName: "",
       tributeCardPhrase: "",
-      tributeCardType: "" as any,
       supplierNote: "",
       deliveryZipCode: "",
       deliveryAddress: "",

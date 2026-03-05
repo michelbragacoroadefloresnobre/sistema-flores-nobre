@@ -61,7 +61,6 @@ const EditOrderScreen = ({ order }: Props) => {
       // Pedido
       honoreeName: order.honoreeName || "",
       tributeCardPhrase: order.tributeCardPhrase || "",
-      tributeCardType: order.tributeCardType || ("" as any),
       supplierNote: order.supplierNote || "",
       deliveryZipCode: String(order.deliveryZipCode).padStart(8, "0") || "",
       deliveryAddress: order.deliveryAddress || "",

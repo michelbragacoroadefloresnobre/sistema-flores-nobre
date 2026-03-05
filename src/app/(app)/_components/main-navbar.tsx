@@ -14,11 +14,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DashboardNavbar } from "@/components/ui/navbar"; // Updated Import
 import { Switch } from "@/components/ui/switch";
+import { Role } from "@/generated/prisma/enums";
 import {
   useToggleViewOnlyMyOrders,
   useViewOnlyMyOrders,
 } from "@/hooks/use-app-storage";
 import { authClient } from "@/lib/auth/client";
+import { Session, User } from "better-auth";
 // import { pusherClient } from "@/lib/pusher/client";
 import {
   Check,
@@ -67,7 +69,6 @@ export function MainNavbar() {
   const router = useRouter();
   // const [notifications, setNotifications] =
   //   useState<iNotification[]>(notificationsData);
-
   const viewOnlyMyOrders = useViewOnlyMyOrders();
   const toggleViewOnlyMyOrders = useToggleViewOnlyMyOrders();
 
@@ -83,10 +84,15 @@ export function MainNavbar() {
     { name: "Formulários", href: "/dashboard/formularios" },
   ];
 
-  const additionalLinks = {
-    "/admin": adminLinks,
-    "/dashboard": pedidosLinks,
-  };
+  const additionalLinks =
+    user?.role === Role.SELLER
+      ? {
+          "/dashboard": pedidosLinks,
+        }
+      : {
+          "/admin": adminLinks,
+          "/dashboard": pedidosLinks,
+        };
 
   const isActive = (path: string) => {
     return pathname.startsWith(path);
@@ -211,7 +217,7 @@ export function MainNavbar() {
             <>
               <div className="mx-2 h-5 w-px self-center bg-border" />
               <div className="flex items-center gap-1">
-                {additionalLinks[selectedMainLink].map((link) => (
+                {additionalLinks[selectedMainLink]?.map((link) => (
                   <DashboardNavbar.Link
                     key={link.name}
                     href={link.href}
@@ -347,15 +353,17 @@ export function MainNavbar() {
 
                   <DropdownMenuSeparator className="my-1 bg-border" />
 
-                  <DropdownMenuItem
-                    asChild
-                    className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-2 text-xs focus:bg-accent"
-                  >
-                    <Link href="/configuracoes/usuarios">
-                      <Settings className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span>Configurações</span>
-                    </Link>
-                  </DropdownMenuItem>
+                  {user?.role !== Role.SELLER && (
+                    <DropdownMenuItem
+                      asChild
+                      className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-2 text-xs focus:bg-accent"
+                    >
+                      <Link href="/configuracoes/usuarios">
+                        <Settings className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span>Configurações</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
 
                   <DropdownMenuItem
                     onClick={() =>

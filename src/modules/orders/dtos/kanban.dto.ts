@@ -5,6 +5,7 @@ export interface iOrderPending {
   deliveryPeriod: DeliveryPeriod;
   deliveryUntil: string;
   deliveryZipCode: number;
+  woocommerceId?: string;
   supplierPanel:
     | {
         id: string;

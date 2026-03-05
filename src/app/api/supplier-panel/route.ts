@@ -85,7 +85,7 @@ export const POST = createRoute(
         return total + (Number(sp?.amount) || 0);
       }, 0);
 
-      const expiresIn = 10;
+      const expiresIn = 30;
       const supplierPanel = await tx.supplierPanel.create({
         data: {
           orderId: orderId,
