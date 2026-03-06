@@ -140,7 +140,7 @@ async function proccessPaidOrder(event: PagarmeOrder) {
 
   await sendMessage(
     order.contact.phone,
-    `*✅ Pagamento no valor de *R$ ${((charge.amount || 0) / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}* confirmado*\nMuito obrigado por comprar com a Coroa de Flores Nobre!\n\nPedido: *#NOBRE${order.id}*`,
+    `*✅ Pagamento no valor de *R$ ${((charge.amount || 0) / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}* confirmado*\nMuito obrigado por comprar com a Flores Nobre!\n\nPedido: *#NOBRE${order.id}*`,
   );
 
   if (order.orderStatus === OrderStatus.DELIVERING_DELIVERED)

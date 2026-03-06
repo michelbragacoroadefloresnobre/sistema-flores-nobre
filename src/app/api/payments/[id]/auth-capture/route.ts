@@ -98,6 +98,7 @@ export const POST = createRoute(
     }
   },
   {
+    public: true,
     body: z.object({
       installments: z.string().length(1),
       cardName: z.string().min(1),

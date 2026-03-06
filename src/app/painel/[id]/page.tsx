@@ -250,9 +250,19 @@ export default async function Page({
                   <MapPin className="w-5 h-5 mt-0.5 shrink-0 text-purple-500" />
                 }
                 label="Local de Entrega"
-                value={`${String(order.deliveryZipCode).padStart(8, "0")}, ${order.deliveryAddressNumber || "S/N"}`}
+                value={`${String(order.deliveryAddress)}, ${order.deliveryAddressNumber || "S/N"} - ${String(order.deliveryNeighboorhood || "")} -   ${String(order.deliveryZipCode).padStart(8, "0")}.`}
                 bgClass="bg-card hover:bg-muted/30 transition-colors"
               />
+              {order.deliveryAddressComplement && (
+                <OrderInfoRow
+                  icon={
+                    <MapPin className="w-5 h-5 mt-0.5 shrink-0 text-yellow-500" />
+                  }
+                  label="Complemento"
+                  value={`${String(order.deliveryAddressComplement)}`}
+                  bgClass="bg-card hover:bg-muted/30 transition-colors"
+                />
+              )}
               {/* <OrderInfoRow
                 icon={
                   <Package className="w-5 h-5 mt-0.5 shrink-0 text-orange-500" />
@@ -278,7 +288,7 @@ export default async function Page({
                 <BrandLogo className="size-10" />
                 <div className="text-center">
                   <p className="text-sm font-medium text-foreground">
-                    Coroa de Flores Nobre
+                    Flores Nobre
                   </p>
                   <p className="text-xs text-muted-foreground">
                     © {new Date().getFullYear()} - Todos os direitos reservados
