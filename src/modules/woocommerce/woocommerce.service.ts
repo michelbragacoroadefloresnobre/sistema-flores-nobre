@@ -200,7 +200,7 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
       phone: phone || "",
       personType: resolvePersonType(document),
       taxId: document,
-      zipCode: parseInt(billing.postcode.replace(/\D/g, "") || "0", 10),
+      zipCode: billing.postcode.replace(/\D/g, "") || "0",
       address: billing.address_1,
       addressNumber: getMeta(meta_data, "_billing_number") || "",
       addressComplement: billing.address_2,
@@ -222,25 +222,27 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
 
     // ----- Form -------------------------------------------------------------
 
-    let form = await prisma.form.updateManyAndReturn({
-      data: {status: FormStatus.CONVERTED},
-      where:{
-        phone: contact.phone,
-        status: { not: FormStatus.CONVERTED},
-        createdAt: {gte: subDays(new Date(), 1)}
-      }
-    }).then(data => data[0])
+    let form = await prisma.form
+      .updateManyAndReturn({
+        data: { status: FormStatus.CONVERTED },
+        where: {
+          phone: contact.phone,
+          status: { not: FormStatus.CONVERTED },
+          createdAt: { gte: subDays(new Date(), 1) },
+        },
+      })
+      .then((data) => data[0]);
 
     if (!form)
-    form = await tx.form.create({
-      data: {
-        type: FormType.SITE_SALE,
-        status: FormStatus.CONVERTED,
-        name: contact.name,
-        email: contact.email,
-        phone: contact.phone,
-      },
-    });
+      form = await tx.form.create({
+        data: {
+          type: FormType.SITE_SALE,
+          status: FormStatus.CONVERTED,
+          name: contact.name,
+          email: contact.email,
+          phone: contact.phone,
+        },
+      });
 
     // ----- Delivery info ----------------------------------------------------
 
@@ -296,10 +298,8 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
         honoreeName,
         senderName: tributeCardFrom,
         tributeCardPhrase,
-        deliveryZipCode: parseInt(
-          shipping.postcode.replace(/\D/g, "") || "0",
-          10,
-        ),
+        deliveryZipCode: shipping.postcode.replace(/\D/g, "") || "0",
+
         deliveryAddress: shipping.address_1,
         deliveryAddressNumber: getMeta(meta_data, "_shipping_number") || "",
         deliveryAddressComplement: shipping.address_2,
@@ -358,7 +358,6 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
     });
     return order;
   });
-
 
   return order;
 }

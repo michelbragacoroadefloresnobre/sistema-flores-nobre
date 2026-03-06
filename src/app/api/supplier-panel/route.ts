@@ -54,8 +54,8 @@ export const POST = createRoute(
       const coverageArea = await tx.coverageArea.findFirst({
         where: {
           supplierId,
-          start: { lte: order.deliveryZipCode },
-          end: { gte: order.deliveryZipCode },
+          start: { lte: Number(order.deliveryZipCode) },
+          end: { gte: Number(order.deliveryZipCode) },
         },
       });
 
@@ -125,7 +125,7 @@ export const POST = createRoute(
 
     const message = buildRequestMessage({
       orderId: order.id,
-      deliveryLocal: `${order.deliveryAddress || ""}`,
+      deliveryLocal: `${order.deliveryAddress}, ${order.deliveryAddressNumber} - ${order.deliveryNeighboorhood} - ${order.deliveryZipCode}. ${order.deliveryAddressComplement ? `\n\n${order.deliveryAddressComplement}` : ""} `,
       time: format(order.deliveryUntil, "dd/MM/yyyy HH:mm"),
       supplierNote: order.supplierNote,
     });

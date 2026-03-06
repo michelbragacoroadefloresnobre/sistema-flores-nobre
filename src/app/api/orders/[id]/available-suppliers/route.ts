@@ -27,8 +27,8 @@ export const GET = createRoute(async (req, { params }) => {
       OR: [{ disabledUntil: null }, { disabledUntil: { lt: new Date() } }],
       coverageAreas: {
         some: {
-          start: { lte: order.deliveryZipCode },
-          end: { gte: order.deliveryZipCode },
+          start: { lte: Number(order.deliveryZipCode) },
+          end: { gte: Number(order.deliveryZipCode) },
         },
       },
       AND: order.orderProducts.map((op) => ({

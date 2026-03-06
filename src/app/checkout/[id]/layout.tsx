@@ -18,8 +18,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <Image
                 width={200}
                 height={200}
-                src="https://nobre-coroa-fotos.s3.us-east-1.amazonaws.com/LOGO%20OFICIAL.png"
-                alt="logotipo da nobre coroa de flores"
+                src="/logo.png"
+                alt="logotipo da Flores Nobre"
                 className="size-10 object-cover rounded-md"
               />
               <div className="hidden md:block">
@@ -37,7 +37,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <footer className="border-t border-border bg-card mt-auto">
         <div className="container mx-auto px-4 py-6">
           <p className="text-center text-sm text-muted-foreground">
-            © 2025 Coroa de Flores Nobre. Todos os direitos reservados.
+            © 2026 Flores Nobre. Todos os direitos reservados.
           </p>
         </div>
       </footer>

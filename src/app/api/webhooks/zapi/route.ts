@@ -115,7 +115,7 @@ async function handleApproveOrder(panelId: string, phone: string) {
       senderName: order.senderName,
       honoreeName: order.honoreeName,
       tributeCardPhrase: order.tributeCardPhrase || "",
-      deliveryLocal: `${order.deliveryAddress || ""}`,
+      deliveryLocal: `${order.deliveryAddress}, ${order.deliveryAddressNumber} - ${order.deliveryNeighboorhood} - ${order.deliveryZipCode}. ${order.deliveryAddressComplement ? `\n\n${order.deliveryAddressComplement}` : ""} `,
       time: format(order.deliveryUntil, "dd/MM/yyyy HH:mm"),
       supplierNote: order.supplierNote,
     });
@@ -127,6 +127,6 @@ async function handleApproveOrder(panelId: string, phone: string) {
 
   await sendMessage(
     order.contact.phone,
-    `PEDIDO 📦 #NOBRE${order.id}\n\n*💐 Pedido em produção*\nEstamos montando sua coroa de flores com todo o cuidado. Avisaremos quando estiver pronta`,
+    `PEDIDO 📦 #NOBRE${order.id}\n\n*💐 Pedido em produção*\nEstamos montando seu presente com todo o cuidado. Avisaremos quando estiver pronto`,
   );
 }

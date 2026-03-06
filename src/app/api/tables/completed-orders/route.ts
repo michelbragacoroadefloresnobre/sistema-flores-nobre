@@ -133,13 +133,13 @@ export const GET = createRoute(
 
     if (searchParams.coverageAreaStart || searchParams.coverageAreaEnd) {
       const cepStart = searchParams.coverageAreaStart
-        ? parseInt(searchParams.coverageAreaStart, 10)
+        ? searchParams.coverageAreaStart
         : undefined;
       const cepEnd = searchParams.coverageAreaEnd
-        ? parseInt(searchParams.coverageAreaEnd, 10)
+        ? searchParams.coverageAreaEnd
         : undefined;
 
-      const zipFilter: Prisma.IntFilter = {};
+      const zipFilter: Prisma.StringFilter = {};
       if (cepStart) zipFilter.gte = cepStart;
       if (cepEnd) zipFilter.lte = cepEnd;
 

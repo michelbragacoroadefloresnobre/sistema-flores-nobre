@@ -16,7 +16,7 @@ model Contact {
   email             String     @db.VarChar(255)
   personType        PersonType
   taxId             String
-  zipCode           Int
+  zipCode           String
   address           String
   addressNumber     String
   addressComplement String
@@ -161,7 +161,7 @@ model Order {
   honoreeName               String
   senderName                String
   tributeCardPhrase         String?
-  deliveryZipCode           Int
+  deliveryZipCode           String
   deliveryAddress           String
   deliveryAddressNumber     String?
   deliveryAddressComplement String?

@@ -47,7 +47,7 @@ export async function notifyPayment({
   const baseMessageParams = {
     orderId: order.id,
     honoreeName: order.honoreeName,
-    deliveryLocal: order.deliveryAddress,
+    deliveryLocal: `${order.deliveryAddress}, ${order.deliveryAddressNumber} - ${order.deliveryNeighboorhood} - ${order.deliveryZipCode}. ${order.deliveryAddressComplement ? `\n\n${order.deliveryAddressComplement}` : ""} `,
     tributeCard: order.tributeCardPhrase,
   };
 
