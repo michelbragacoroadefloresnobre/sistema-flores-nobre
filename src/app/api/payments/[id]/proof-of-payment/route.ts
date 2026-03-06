@@ -6,7 +6,7 @@ import createHttpError from "http-errors";
 import z from "zod";
 
 export const POST = createRoute(
-  async (req, { body }) => {
+  async (req, { body, params }) => {
     const imageUrl = `https://${env.S3_BUCKET_NAME}.s3.${env.AWS_REGION}.amazonaws.com/${body.fileKey}`;
     const fileUrlResponse = await fetch(imageUrl);
 
@@ -17,6 +17,8 @@ export const POST = createRoute(
     if (!allowedImageTypes.includes(contentType))
       throw new createHttpError.BadRequest("Formato de imagem incompativel");
 
+    const {id} = params
+
     const { count } = await prisma.payment.updateMany({
       data: {
         proofOfPaymentUrl: imageUrl,
@@ -26,6 +28,7 @@ export const POST = createRoute(
       where: {
         proofOfPaymentUrl: null,
         status: PaymentStatus.ACTIVE,
+        id
       },
     });
 
