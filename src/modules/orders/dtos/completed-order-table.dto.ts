@@ -19,11 +19,29 @@ export const completedFilterOptionsSchema = z.object({
   contactType: z.enum(PersonType).optional(),
   contactOrigin: z.enum(ContactOrigin).optional(),
   taxId: z.string().optional(),
-  sellers: z.array(z.string()).optional(),
-  suppliers: z.array(z.string()).optional(),
+  sellers: z
+    .preprocess(
+      (val) =>
+        val === undefined
+          ? undefined
+          : Array.isArray(val)
+            ? val
+            : String(val).split(",").filter(Boolean),
+      z.array(z.string()).optional(),
+    ),
+  suppliers: z
+    .preprocess(
+      (val) =>
+        val === undefined
+          ? undefined
+          : Array.isArray(val)
+            ? val
+            : String(val).split(",").filter(Boolean),
+      z.array(z.string()).optional(),
+    ),
   product: z.string().optional(),
   coverageAreaStart: z.string().optional(),
   coverageAreaEnd: z.string().optional(),
 });
 
-export type CompletedFilterOptions = z.infer<typeof completedFilterOptionsSchema>;
+export type CompletedFilterOptions = z.infer<typeof completedFilterOptionsSchema>;  
