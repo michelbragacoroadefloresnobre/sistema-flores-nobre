@@ -1,17 +1,15 @@
 import { Button } from "@/components/ui/button";
-import {
-  Combobox,
-  ComboboxChip,
-  ComboboxChips,
-  ComboboxChipsInput,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxItem,
-  ComboboxList,
-  ComboboxValue,
-} from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  MultiSelect,
+  MultiSelectBadge,
+  MultiSelectContent,
+  MultiSelectInput,
+  MultiSelectItem,
+  MultiSelectList,
+  MultiSelectTrigger,
+} from "@/components/ui/multi-select";
 import {
   Select,
   SelectContent,
@@ -222,9 +220,7 @@ export default function FormFilters({
                   </SelectTrigger>
                   <SelectContent className="overflow-y-auto">
                     <SelectItem value="none">Não Definido</SelectItem>
-                    <SelectItem value={PaymentStatus.ACTIVE}>
-                      Ativo
-                    </SelectItem>
+                    <SelectItem value={PaymentStatus.ACTIVE}>Ativo</SelectItem>
                     <SelectItem value={PaymentStatus.PAID}>Pago</SelectItem>
                     <SelectItem value={PaymentStatus.CANCELLED}>
                       Cancelado
@@ -350,9 +346,7 @@ export default function FormFilters({
                   </SelectTrigger>
                   <SelectContent className="overflow-y-auto">
                     <SelectItem value="none">Não Definido</SelectItem>
-                    <SelectItem value={PersonType.PF}>
-                      Pessoa Física
-                    </SelectItem>
+                    <SelectItem value={PersonType.PF}>Pessoa Física</SelectItem>
                     <SelectItem value={PersonType.PJ}>
                       Pessoa Jurídica
                     </SelectItem>
@@ -412,33 +406,31 @@ export default function FormFilters({
               name="sellers"
               control={control}
               render={({ field }) => (
-                <Combobox
-                  items={sellers || []}
-                  multiple
-                  value={field.value}
+                <MultiSelect
+                  options={sellers || []}
+                  value={field.value || []}
                   onValueChange={(items) => field.onChange(items)}
+                  filterBy={(seller) => seller.name}
+                  valueExtractor={(seller) => seller.id}
                 >
-                  <ComboboxChips>
-                    <ComboboxValue>
-                      {(field.value || []).map((v) => (
-                        <ComboboxChip key={v}>
-                          {sellers?.find((s) => s.id === v)?.name}
-                        </ComboboxChip>
-                      ))}
-                    </ComboboxValue>
-                    <ComboboxChipsInput placeholder="Adicione um vendedor" />
-                  </ComboboxChips>
-                  <ComboboxContent>
-                    <ComboboxEmpty>Nenhum vendedor encontrado</ComboboxEmpty>
-                    <ComboboxList>
+                  <MultiSelectTrigger>
+                    {(field.value || []).map((v) => (
+                      <MultiSelectBadge key={v} value={v}>
+                        {sellers?.find((s) => s.id === v)?.name}
+                      </MultiSelectBadge>
+                    ))}
+                    <MultiSelectInput placeholder="Adicione um vendedor" />
+                  </MultiSelectTrigger>
+                  <MultiSelectContent>
+                    <MultiSelectList<User> emptyMessage="Nenhum vendedor encontrado">
                       {(item) => (
-                        <ComboboxItem key={item.id} value={item.id}>
+                        <MultiSelectItem key={item.id} value={item.id}>
                           {item.name}
-                        </ComboboxItem>
+                        </MultiSelectItem>
                       )}
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
+                    </MultiSelectList>
+                  </MultiSelectContent>
+                </MultiSelect>
               )}
             />
           </div>
@@ -449,35 +441,31 @@ export default function FormFilters({
               name="suppliers"
               control={control}
               render={({ field }) => (
-                <Combobox
-                  items={suppliers || []}
-                  multiple
-                  value={field.value}
+                <MultiSelect
+                  options={suppliers || []}
+                  value={field.value || []}
                   onValueChange={(items) => field.onChange(items)}
+                  filterBy={(supplier) => supplier.name}
+                  valueExtractor={(supplier) => supplier.id}
                 >
-                  <ComboboxChips>
-                    <ComboboxValue>
-                      {(field.value || []).map((v) => (
-                        <ComboboxChip key={v}>
-                          {suppliers?.find((s) => s.id === v)?.name}
-                        </ComboboxChip>
-                      ))}
-                    </ComboboxValue>
-                    <ComboboxChipsInput placeholder="Adicione um fornecedor" />
-                  </ComboboxChips>
-                  <ComboboxContent>
-                    <ComboboxEmpty>
-                      Nenhum fornecedor encontrado
-                    </ComboboxEmpty>
-                    <ComboboxList>
+                  <MultiSelectTrigger>
+                    {(field.value || []).map((v) => (
+                      <MultiSelectBadge key={v} value={v}>
+                        {suppliers?.find((s) => s.id === v)?.name}
+                      </MultiSelectBadge>
+                    ))}
+                    <MultiSelectInput placeholder="Adicione um fornecedor" />
+                  </MultiSelectTrigger>
+                  <MultiSelectContent>
+                    <MultiSelectList<SupplierOption> emptyMessage="Nenhum fornecedor encontrado">
                       {(item) => (
-                        <ComboboxItem key={item.id} value={item.id}>
+                        <MultiSelectItem key={item.id} value={item.id}>
                           {item.name}
-                        </ComboboxItem>
+                        </MultiSelectItem>
                       )}
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
+                    </MultiSelectList>
+                  </MultiSelectContent>
+                </MultiSelect>
               )}
             />
           </div>
@@ -509,7 +497,9 @@ export default function FormFilters({
                   className="mb-2"
                   value={field.value ? formatCep(field.value) : ""}
                   onChange={(e) =>
-                    field.onChange(e.target.value.replace(/\D/g, "").slice(0, 8))
+                    field.onChange(
+                      e.target.value.replace(/\D/g, "").slice(0, 8),
+                    )
                   }
                   placeholder="CEP Inicial (00000-000)"
                   maxLength={9}
@@ -524,7 +514,9 @@ export default function FormFilters({
                   type="text"
                   value={field.value ? formatCep(field.value) : ""}
                   onChange={(e) =>
-                    field.onChange(e.target.value.replace(/\D/g, "").slice(0, 8))
+                    field.onChange(
+                      e.target.value.replace(/\D/g, "").slice(0, 8),
+                    )
                   }
                   placeholder="CEP Final (99999-999)"
                   maxLength={9}
