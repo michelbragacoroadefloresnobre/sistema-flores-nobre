@@ -1,6 +1,7 @@
 import { OrderStatus, SupplierPanelStatus } from "@/generated/prisma/enums";
 import { createRoute } from "@/lib/handler/route-handler";
 import prisma from "@/lib/prisma";
+import { finishOrder } from "@/modules/orders/order.service";
 import createHttpError from "http-errors";
 import z from "zod";
 
@@ -8,13 +9,20 @@ export const PATCH = createRoute(
   async (req, { body, params }) => {
     const { id } = params;
 
-    await prisma.supplierPanel.update({
+    const updatedPanel = await prisma.supplierPanel.update({
       data: {
         cost: Number(body.cost) || undefined,
         freight: Number(body.freight) || undefined,
       },
       where: { id, status: SupplierPanelStatus.CONFIRMED },
     });
+
+    const order = await prisma.order.findFirst({
+      where: { id: updatedPanel.orderId}
+    })
+
+    if (order?.orderStatus === OrderStatus.DELIVERING_DELIVERED)
+            await finishOrder(order.id);
 
     return "Valor atualizado com sucesso!";
   },

@@ -48,6 +48,7 @@ import { useState } from "react";
 export interface CompletedOrderItem {
   id: string;
   supplierName: string;
+  contactName:string;
   sellerName: string;
   amount: number;
   cost: number;
@@ -220,6 +221,9 @@ const CompletedTable = ({
                 Fornecedor
               </TableHead>
               <TableHead className="text-center font-medium text-foreground py-4">
+                Cliente
+              </TableHead>
+              <TableHead className="text-center font-medium text-foreground py-4">
                 Vendedor
               </TableHead>
               <TableHead className="text-center font-medium text-foreground py-4">
@@ -278,6 +282,10 @@ const CompletedTable = ({
 
                     <TableCell className="py-4 font-semibold text-foreground text-center">
                       {order.supplierName}
+                    </TableCell>
+
+                    <TableCell className="py-4 font-semibold text-foreground text-center">
+                      {order.contactName}
                     </TableCell>
 
                     <TableCell className="text-center py-4">
