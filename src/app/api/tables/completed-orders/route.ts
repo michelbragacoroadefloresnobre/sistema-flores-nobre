@@ -115,6 +115,7 @@ export const GET = createRoute(
       where.supplierPanels = {
         some: {
           supplierId: { in: searchParams.suppliers },
+          status: { not: "CANCELLED" },
         },
       };
     }
@@ -207,7 +208,7 @@ const patchBodySchema = z.object({
 });
 
 export const PATCH = createRoute(
-  async (req, { body }) =>  {
+  async (req, { body }) => {
     const { orderIds, supplierPaymentStatus } = body;
 
     await prisma.order.updateMany({
