@@ -168,6 +168,7 @@ export const GET = createRoute(
             },
           },
         },
+        contact: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -183,6 +184,7 @@ export const GET = createRoute(
       return {
         id: order.id,
         supplierName: panel?.supplier?.name ?? "Sem fornecedor",
+        contactName: order.contact.name,
         sellerName: order.user.name,
         amount: payment ? Number(payment.amount) : 0,
         cost,
