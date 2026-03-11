@@ -34,7 +34,7 @@ export const PUT = createRoute(
     const periodHours: Record<string, number> = {
       [DeliveryPeriod.MORNING]: 6,
       [DeliveryPeriod.AFTERNOON]: 12,
-      [DeliveryPeriod.EVENING]: 18,
+      [DeliveryPeriod.BUSINESSHOURS]: 18,
     };
 
     let deliveryUntil: DateTime;

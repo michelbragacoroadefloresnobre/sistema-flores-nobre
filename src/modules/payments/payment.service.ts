@@ -12,6 +12,8 @@ import { createId } from "@paralleldrive/cuid2";
 import createHttpError from "http-errors";
 import { DateTime } from "luxon";
 import { sendBoleto } from "../message/boleto.service";
+import { deliveryPeriodMap } from "@/lib/utils";
+import { format } from "date-fns";
 
 export const shouldHandleInternally = (data: {
   type: PaymentType;
@@ -40,9 +42,11 @@ export async function notifyPayment({
   order,
   customer,
 }: NotifyPaymentParams) {
-  const formattedDate = DateTime.fromJSDate(order.deliveryUntil)
-    .setZone(SP_TIMEZONE)
-    .toFormat("HH:mm 'do dia' dd 'de' LLLL");
+  const periodLabel = deliveryPeriodMap[order.deliveryPeriod];
+  const timeFormatted =
+    order.deliveryPeriod === "EXPRESS"
+      ? `${format(order.deliveryUntil, "dd/MM/yy HH:mm")} - ${periodLabel}`
+      : `${format(order.deliveryUntil, "dd/MM/yy")} - ${periodLabel}`;
 
   const baseMessageParams = {
     orderId: order.id,
@@ -60,7 +64,7 @@ export async function notifyPayment({
     const message = buildLinkPaymentMessage({
       ...baseMessageParams,
       payment: payment.url || payment.text || null,
-      deliveryHour: `Entrega até ${formattedDate}`,
+      deliveryHour: `Entrega até ${timeFormatted}`,
     });
 
     await sendMessage(customer.phone, message);
@@ -71,7 +75,7 @@ export async function notifyPayment({
     const message = buildLinkPaymentMessage({
       ...baseMessageParams,
       payment: null,
-      deliveryHour: `Até ${formattedDate}`,
+      deliveryHour: `Até ${timeFormatted}`,
     });
 
     // scheduleBoletoDueNotification logic here if needed...
@@ -91,7 +95,7 @@ export async function notifyPayment({
     const message = buildLinkPaymentMessage({
       ...baseMessageParams,
       payment: null,
-      deliveryHour: `Até ${formattedDate}`,
+      deliveryHour: `Até ${timeFormatted}`,
     });
 
     await sendMessage(customer.phone, message);

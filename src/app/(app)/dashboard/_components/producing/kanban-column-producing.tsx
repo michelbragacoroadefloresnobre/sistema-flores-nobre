@@ -8,7 +8,7 @@ const PERIOD_PRIORITY: Record<string, number> = {
   EXPRESS: 0,
   MORNING: 1,
   AFTERNOON: 2,
-  EVENING: 3,
+  BUSINNESHOURS: 3,
 };
 
 function sortOrderCards<

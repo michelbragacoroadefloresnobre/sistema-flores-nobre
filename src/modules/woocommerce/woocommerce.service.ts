@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import {
   ContactOrigin,
+  DeliveryPeriod,
   FormStatus,
   FormType,
   OrderStatus,
@@ -16,6 +17,8 @@ import { Contact } from "lucide-react";
 import { createCityIfNotExists } from "../cities/city.service";
 import { sendInitialTemplate } from "../conversions/conversion.service";
 import { subDays } from "date-fns";
+import { DateTime, Duration } from "luxon";
+import { SP_TIMEZONE } from "@/lib/env";
 
 // ---------------------------------------------------------------------------
 // Schemas
@@ -82,6 +85,12 @@ export type WooOrderEvent = z.infer<typeof wooOrderEventSchema>;
 // Constants
 // ---------------------------------------------------------------------------
 
+const periodHours: Record<string, number> = {
+  [DeliveryPeriod.MORNING]: 6,
+  [DeliveryPeriod.AFTERNOON]: 12,
+  [DeliveryPeriod.BUSINESSHOURS]: 18,
+};
+
 const VALID_UFS = new Set([
   "AC",
   "AL",
@@ -125,7 +134,7 @@ const DELIVERY_PERIOD_MAP: Record<
   expressa: "EXPRESS",
   manha: "MORNING",
   tarde: "AFTERNOON",
-  noite: "EVENING",
+  comercial: "BUSINESSHOURS",
 };
 
 function getMeta(metaData: WooOrderEvent["meta_data"], key: string) {
@@ -258,7 +267,22 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
     const rawPeriod = (
       getMeta(meta_data, "_delivery_period") || ""
     ).toLowerCase();
-    const deliveryPeriod = DELIVERY_PERIOD_MAP[rawPeriod] ?? "MORNING";
+    const deliveryPeriod = DELIVERY_PERIOD_MAP[rawPeriod] ?? "BUSINESSHOURS";
+
+    let deliveryUntil: DateTime;
+
+    if (deliveryPeriod === DeliveryPeriod.EXPRESS)
+      deliveryUntil = DateTime.now().setZone(SP_TIMEZONE).plus({ hours: 3 });
+    else {
+      const hour = periodHours[deliveryPeriod];
+
+      if (!hour)
+        throw new createHttpError.BadRequest("Periodo informado é invalido");
+
+      deliveryUntil = DateTime.fromISO(deliveryDate.toDateString(), {
+        zone: SP_TIMEZONE,
+      }).set({ hour, minute: 0, millisecond: 0 });
+    }
 
     const giftOption = getMeta(meta_data, "_gift_card_option") === "yes";
     const honoreeName = getMeta(meta_data, "_gift_card_to") || "";
@@ -291,7 +315,7 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
         contactOrigin: ContactOrigin.NONE,
         orderStatus: OrderStatus.PENDING_PREPARATION,
         deliveryPeriod,
-        deliveryUntil: deliveryDate,
+        deliveryUntil: deliveryUntil.toJSDate(),
         formId: form.id,
         userId: defaultUser.id,
         woocommerceId: event.id?.toString(),
