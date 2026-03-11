@@ -14,6 +14,7 @@ import { DateTime } from "luxon";
 import { sendBoleto } from "../message/boleto.service";
 import { deliveryPeriodMap } from "@/lib/utils";
 import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 
 export const shouldHandleInternally = (data: {
   type: PaymentType;
@@ -45,7 +46,7 @@ export async function notifyPayment({
   const periodLabel = deliveryPeriodMap[order.deliveryPeriod];
   const timeFormatted =
     order.deliveryPeriod === "EXPRESS"
-      ? `${format(order.deliveryUntil, "dd/MM/yy HH:mm")} - ${periodLabel}`
+      ? `${formatInTimeZone(order.deliveryUntil, "America/Sao_Paulo", "dd/MM/yy HH:mm")} - ${periodLabel}`
       : `${format(order.deliveryUntil, "dd/MM/yy")} - ${periodLabel}`;
 
   const baseMessageParams = {

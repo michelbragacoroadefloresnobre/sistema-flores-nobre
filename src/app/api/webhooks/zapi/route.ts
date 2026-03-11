@@ -1,4 +1,4 @@
-import { OrderStatus, SupplierPanelStatus } from "@/generated/prisma/enums";
+import { DeliveryPeriod, OrderStatus, SupplierPanelStatus } from "@/generated/prisma/enums";
 import { sendMessage } from "@/lib/helena";
 import prisma from "@/lib/prisma";
 import { buildConfirmationMessage, sendMessageToSupplier } from "@/lib/zapi";
@@ -7,6 +7,7 @@ import createHttpError from "http-errors";
 import { NextRequest, NextResponse } from "next/server";
 import { NewWhatsAppButtonCallback } from "./type";
 import { deliveryPeriodMap, getVariantLabel } from "@/lib/utils";
+import { formatInTimeZone } from "date-fns-tz";
 
 export async function POST(req: NextRequest) {
   const body: NewWhatsAppButtonCallback | undefined = await req.json();
@@ -131,8 +132,8 @@ async function handleApproveOrder(panelId: string, phone: string) {
 
   const periodLabel = deliveryPeriodMap[order.deliveryPeriod];
   const timeFormatted =
-    order.deliveryPeriod === "EXPRESS"
-      ? `${format(order.deliveryUntil, "dd/MM/yy HH:mm")} - ${periodLabel}`
+    order.deliveryPeriod === DeliveryPeriod.EXPRESS
+      ? `${formatInTimeZone(order.deliveryUntil, "America/Sao_Paulo", "dd/MM/yy HH:mm")} - ${periodLabel}`
       : `${format(order.deliveryUntil, "dd/MM/yy")} - ${periodLabel}`;
 
   try {
