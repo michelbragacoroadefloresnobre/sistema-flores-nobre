@@ -43,7 +43,7 @@ export function OrderDisplay({
   const formattedDate =
     deliveryPeriod === DeliveryPeriod.EXPRESS
       ? format(deliveryUntil, "HH:mm")
-      : formatInTimeZone(deliveryUntil, "UTC", "dd/MM");;
+      : formatInTimeZone(deliveryUntil, "UTC", "dd/MM");
 
   return (
     <div

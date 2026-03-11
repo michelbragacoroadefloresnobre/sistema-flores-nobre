@@ -1,4 +1,5 @@
 import {
+  DeliveryPeriod,
   OrderStatus,
   SupplierPanelPhotoStatus,
   SupplierPanelStatus,
@@ -15,6 +16,7 @@ import {
   sendPhotoToSupplier,
 } from "@/lib/zapi";
 import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import createHttpError from "http-errors";
 import { DateTime } from "luxon";
 import z from "zod";
@@ -126,8 +128,8 @@ export const POST = createRoute(
 
     const periodLabel = deliveryPeriodMap[order.deliveryPeriod];
     const timeFormatted =
-      order.deliveryPeriod === "EXPRESS"
-        ? `${format(order.deliveryUntil, "dd/MM/yy HH:mm")} - ${periodLabel}`
+      order.deliveryPeriod === DeliveryPeriod.EXPRESS
+        ? `${formatInTimeZone(order.deliveryUntil, "America/Sao_Paulo", "dd/MM/yy HH:mm")} - ${periodLabel}`
         : `${format(order.deliveryUntil, "dd/MM/yy")} - ${periodLabel}`;
 
     const message = buildRequestMessage({

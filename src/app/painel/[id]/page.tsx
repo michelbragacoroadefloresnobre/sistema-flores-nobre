@@ -11,6 +11,7 @@ import { DeliveredSection } from "./_components/delivered-section";
 import { DeliveringSection } from "./_components/delivering-section";
 import { ImageSection } from "./_components/image-section";
 import { OrderInfoRow } from "./_components/order-info-row";
+import { formatInTimeZone } from "date-fns-tz";
 
 const BrandLogo = ({ className }: { className?: string }) => (
   <Image
@@ -194,7 +195,7 @@ export default async function Page({
   const periodLabel = deliveryPeriodMap[order.deliveryPeriod];
   const timeFormatted =
     order.deliveryPeriod === "EXPRESS"
-      ? `${format(order.deliveryUntil, "dd/MM/yy HH:mm")} - ${periodLabel}`
+      ? `${formatInTimeZone(order.deliveryUntil, "America/Sao_Paulo", "dd/MM/yy HH:mm")} - ${periodLabel}`
       : `${format(order.deliveryUntil, "dd/MM/yy")} - ${periodLabel}`;
 
   const isCancelable = [
