@@ -33,8 +33,8 @@ export function OrderDisplay({
         return "Manhã";
       case DeliveryPeriod.AFTERNOON:
         return "Tarde";
-      case DeliveryPeriod.EVENING:
-        return "Noite";
+      case DeliveryPeriod.BUSINESSHOURS:
+        return "Horário Comercial";
       case DeliveryPeriod.EXPRESS:
         return "Expresso";
     }

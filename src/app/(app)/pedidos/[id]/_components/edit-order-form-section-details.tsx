@@ -111,7 +111,7 @@ export function EditOrderFormSectionDetails({
                     <SelectItem value={DeliveryPeriod.AFTERNOON}>
                       Tarde
                     </SelectItem>
-                    {/* <SelectItem value={DeliveryPeriod.EVENING}>Noite</SelectItem> */}
+                    <SelectItem value={DeliveryPeriod.BUSINESSHOURS}>Horário Comercial</SelectItem>
                   </SelectContent>
                 </Select>
               </FormItem>

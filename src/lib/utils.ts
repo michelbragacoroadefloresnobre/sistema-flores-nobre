@@ -1,4 +1,4 @@
-import { ProductColor, ProductSize, Role } from "@/generated/prisma/enums";
+import { DeliveryPeriod, ProductColor, ProductSize, Role } from "@/generated/prisma/enums";
 import {
   PRODUCT_COLOR_MAP,
   PRODUCT_SIZE_MAP,
@@ -229,3 +229,10 @@ export function getVariantLabel({
         ? `${PRODUCT_SIZE_MAP[size]}`
         : `${PRODUCT_SIZE_MAP[size]} — ${PRODUCT_COLOR_MAP[color]}`;
 }
+
+export const deliveryPeriodMap: Record<DeliveryPeriod, string> = {
+  MORNING: "Manhã",
+  AFTERNOON: "Tarde",
+  BUSINESSHOURS: "Horário Comercial",
+  EXPRESS: "Expressa",
+};

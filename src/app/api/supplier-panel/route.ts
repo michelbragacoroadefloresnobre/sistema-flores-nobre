@@ -7,7 +7,7 @@ import { env } from "@/lib/env";
 import { createRoute } from "@/lib/handler/route-handler";
 import prisma from "@/lib/prisma";
 import { scheduleUrlCall } from "@/lib/scheduler";
-import { getVariantLabel } from "@/lib/utils";
+import { deliveryPeriodMap, getVariantLabel } from "@/lib/utils";
 import {
   buildItemMessage,
   buildRequestMessage,
@@ -24,16 +24,17 @@ export const POST = createRoute(
     const { supplierId, orderId } = body;
 
     const orderProducts = await prisma.orderProduct.findMany({
-        where: {
-          orderId: orderId,
+      where: {
+        orderId: orderId,
+      },
+      include: {
+        variant: {
+          include: { product: true },
         },
-        include: {
-          variant: { include: { product: true } },
-        },
-      });
+      },
+    });
 
     const { supplierPanel, order } = await prisma.$transaction(async (tx) => {
-      
       const orders = await tx.order.updateManyAndReturn({
         data: { orderStatus: OrderStatus.PENDING_WAITING },
         where: {
@@ -49,7 +50,7 @@ export const POST = createRoute(
 
       const order = orders[0];
       if (!order)
-        throw new createHttpError.BadRequest("Operação não disponivel");     
+        throw new createHttpError.BadRequest("Operação não disponivel");
 
       const coverageArea = await tx.coverageArea.findFirst({
         where: {
@@ -123,12 +124,20 @@ export const POST = createRoute(
       };
     });
 
+    const periodLabel = deliveryPeriodMap[order.deliveryPeriod];
+    const timeFormatted =
+      order.deliveryPeriod === "EXPRESS"
+        ? `${format(order.deliveryUntil, "dd/MM/yy HH:mm")} - ${periodLabel}`
+        : `${format(order.deliveryUntil, "dd/MM/yy")} - ${periodLabel}`;
+
     const message = buildRequestMessage({
       orderId: order.id,
-      deliveryLocal: `${order.deliveryAddress}, ${order.deliveryAddressNumber} - ${order.deliveryNeighboorhood} - ${order.deliveryZipCode}. ${order.deliveryAddressComplement ? `\n\n${order.deliveryAddressComplement}` : ""} `,
-      time: format(order.deliveryUntil, "dd/MM/yyyy HH:mm"),
+      deliveryLocal: `${order.deliveryAddress}, ${order.deliveryAddressNumber} - ${order.deliveryNeighboorhood} - ${order.deliveryZipCode}. ${order.deliveryAddressComplement ? `\n\nComplemento: ${order.deliveryAddressComplement}` : ""} `,
+      time: timeFormatted,
       supplierNote: order.supplierNote,
     });
+
+    const photosUrls = orderProducts.map(op => op.variant.imageUrl)
 
     try {
       const messageWithBUttonsResponse = await sendMessageToSupplierWithButtons(
@@ -144,12 +153,8 @@ export const POST = createRoute(
             label: "Aceitar",
           },
         ],
+        photosUrls,
       );
-
-      orderProducts.forEach(async (op) => {
-        const itemMessage = buildItemMessage({ itemName: `${op.variant.product.name} - ${getVariantLabel({ size: op.variant.size, color: op.variant.color })}` }); 
-        await sendPhotoToSupplier(supplierPanel.supplier.jid, itemMessage, op.variant.imageUrl, messageWithBUttonsResponse.messageId)
-      });
     } catch (e: any) {
       console.error(
         "Erro ao enviar mensagem de aceite para fornecedor:",

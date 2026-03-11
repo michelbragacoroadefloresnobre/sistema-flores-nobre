@@ -1,5 +1,7 @@
 import axios from "axios";
 import { env } from "./env";
+import sharp from "sharp";
+import createHttpError from "http-errors";
 
 export interface iChat {
   pinned: string;
@@ -13,6 +15,41 @@ export interface iChat {
   isGroup: boolean;
   isMuted: string;
   isMarkedSpam: string;
+}
+
+async function mergeImages(urls: string[]): Promise<string> {
+  const images = await Promise.all(
+    urls.map(async (url) => {
+      const res = await fetch(url);
+      const buffer = Buffer.from(await res.arrayBuffer());
+      return sharp(buffer).resize(300, 300, { fit: "cover" }).toBuffer();
+    }),
+  );
+
+  const cols = Math.ceil(Math.sqrt(images.length));
+  const rows = Math.ceil(images.length / cols);
+  const size = 300;
+  const gap = 5;
+
+  const composites = images.map((img, i) => ({
+    input: img,
+    left: (i % cols) * (size + gap),
+    top: Math.floor(i / cols) * (size + gap),
+  }));
+
+  const buffer = await sharp({
+    create: {
+      width: cols * (size + gap) - gap,
+      height: rows * (size + gap) - gap,
+      channels: 4,
+      background: { r: 255, g: 255, b: 255, alpha: 1 },
+    },
+  })
+    .composite(composites)
+    .png()
+    .toBuffer();
+
+  return `data:image/png;base64,${buffer.toString("base64")}`;
 }
 
 export async function getSupplierGroups(): Promise<iChat[]> {
@@ -37,7 +74,7 @@ export const sendMessageToSupplierWithButtons = async (
     id: string;
     label: string;
   }[],
-  image?: string,
+  urlPhotos?: string[],
 ) => {
   const token = env.ZAPI_TOKEN;
   const instance = env.ZAPI_INSTANCE;
@@ -49,20 +86,21 @@ export const sendMessageToSupplierWithButtons = async (
 
   const config = { headers: { "client-token": client_token } };
 
+  if(!urlPhotos) throw new createHttpError.BadRequest("Nenhuma foto encontrada para os produtos");
+
+  const mergedImages = urlPhotos.length > 0 ? await mergeImages(urlPhotos) : urlPhotos[0];
+
   const fetchResponse = await axios.post(
     `https://api.z-api.io/instances/${instance}/token/${token}/send-button-list`,
     {
       phone: numberOrGroupId || env.NEXT_PUBLIC_INTERNAL_SUPPLIER_JID,
       message: message,
-      buttonList: {
-        image,
-        buttons,
-      },
+      buttonList: { image: mergedImages, buttons },
     },
     config,
   );
 
-  return fetchResponse.data;
+  return ""; //fetchResponse.data;
 };
 
 export const sendMessageToSupplier = async (
@@ -154,36 +192,46 @@ export const buildConfirmationMessage = (data: {
   deliveryLocal: string;
   time: string;
   supplierNote: string | undefined;
+  productList: {name: string, quantity: number}[];
 }) => {
   let message = `
 PEDIDO 📦 *#NOBRE${data.orderId}*
 
 🙇🏻‍♂️ Nome da Pessoa Homenageada: 
-*${data.honoreeName}*
+> *${data.honoreeName}*
 
 📍 Local da Entrega: 
-*${data.deliveryLocal.trim()}*
+> ${data.deliveryLocal.trim()}
 
 ⏰ Horário:
-*${data.time}*
+> *${data.time}*
+
+🌹 Produtos:
 `;
+
+data.productList.forEach(p => {
+  message += `
+> *${p.name}*
+> Quantidade: *${p.quantity}*
+`;
+});
 
   if (data.supplierNote)
     message += `
 📌 Observações:
-*${data.supplierNote}*
+> *${data.supplierNote}*
 `;
 
   if (data.honoreeName)
     message += `
 🎁 Nome do Remetente: 
-*${data.senderName}*
+> *${data.senderName}*
 
 🙇🏻‍♂️ Nome da Pessoa Homenageada: 
-*${data.honoreeName}*
+> *${data.honoreeName}*
 
 ✉️ Frase de Homenagem: 
-*${data.tributeCardPhrase}*
+> *${data.tributeCardPhrase}*
 `;
 
   message += `

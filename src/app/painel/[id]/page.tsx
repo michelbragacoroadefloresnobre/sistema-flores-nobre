@@ -1,6 +1,6 @@
 import { OrderStatus, SupplierPanelStatus } from "@/generated/prisma/enums";
 import prisma from "@/lib/prisma";
-import { cn, getVariantLabel } from "@/lib/utils"; // Assumindo que você tem o util do shadcn
+import { cn, deliveryPeriodMap, getVariantLabel } from "@/lib/utils"; // Assumindo que você tem o util do shadcn
 import { format } from "date-fns";
 import { Clock, Heart, MapPin, Package, User } from "lucide-react";
 import Image from "next/image";
@@ -191,6 +191,12 @@ export default async function Page({
     }
   };
 
+  const periodLabel = deliveryPeriodMap[order.deliveryPeriod];
+  const timeFormatted =
+    order.deliveryPeriod === "EXPRESS"
+      ? `${format(order.deliveryUntil, "dd/MM/yy HH:mm")} - ${periodLabel}`
+      : `${format(order.deliveryUntil, "dd/MM/yy")} - ${periodLabel}`;
+
   const isCancelable = [
     OrderStatus.PRODUCING,
     OrderStatus.DELIVERING_ON_ROUTE,
@@ -242,7 +248,7 @@ export default async function Page({
                   <Clock className="w-5 h-5 mt-0.5 shrink-0 text-emerald-500" />
                 }
                 label={"Entrega Prevista"}
-                value={format(order.deliveryUntil, "dd/MM, HH:mm")}
+                value={timeFormatted}
                 bgClass="bg-card hover:bg-muted/30 transition-colors"
               />
               <OrderInfoRow

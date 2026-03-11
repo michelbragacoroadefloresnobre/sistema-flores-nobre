@@ -87,6 +87,7 @@ export function MainNavbar() {
   const additionalLinks =
     user?.role === Role.SELLER
       ? {
+          "/admin": adminLinks,
           "/dashboard": pedidosLinks,
         }
       : {
