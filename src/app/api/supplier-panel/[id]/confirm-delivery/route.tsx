@@ -10,7 +10,6 @@ import z from "zod";
 
 export const POST = createRoute(
   async (req, { params, body }) => {
-    console.log({ body });
 
     const { order } = await prisma.$transaction(async (tx) => {
       const supplierPanels = await tx.supplierPanel.updateManyAndReturn({

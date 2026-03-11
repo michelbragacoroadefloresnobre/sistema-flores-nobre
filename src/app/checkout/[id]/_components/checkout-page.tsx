@@ -4,6 +4,7 @@ import { Prisma } from "@/generated/prisma/browser";
 import { revalidatePath } from "@/lib/revalidate-sc";
 import axios, { AxiosError } from "axios";
 import { useState } from "react";
+import { serialize } from "@/lib/utils";
 import { toast } from "sonner";
 import { validateCardNumber, validateCVV, validateExpiryDate } from "../utils";
 import { CheckoutForm, CheckoutFormData } from "./checkout-form";
@@ -13,7 +14,7 @@ import { OrderSummary } from "./order-summary";
 interface Props {
   payment: Prisma.PaymentGetPayload<{
     include: {
-      order: true;
+      order: { include: { orderProducts: true } };
     };
   }>;
 }
@@ -94,6 +95,7 @@ export function CheckoutPage({ payment }: Props) {
           <OrderSummary
             // productName={payment.order.product.name}
             // image={payment.order.product.imageUrl}
+            products={serialize(payment.order.orderProducts)}
             value={Number(payment.amount).toFixed(2)}
           />
         </div>

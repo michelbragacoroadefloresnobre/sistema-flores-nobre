@@ -88,8 +88,6 @@ export function createRoute<B = any, Q = any>(
         };
       }
 
-      // console.log(`[ResponseBody] ${JSON.stringify(responseData, null, 2)}`);
-
       return NextResponse.json(responseData, {
         status: req.method === "POST" ? 201 : 200,
       });

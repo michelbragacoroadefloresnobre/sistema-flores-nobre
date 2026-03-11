@@ -55,11 +55,6 @@ export function DeliveringSection({ panelId }: DeliveringSectionProps) {
       setIsLoading(false);
       revalidatePath(`/painel/${panelId}`);
     }
-
-    console.log({
-      deliveredAt,
-      receiverName,
-    });
   };
 
   return (

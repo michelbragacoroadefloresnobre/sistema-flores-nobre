@@ -59,6 +59,11 @@ export function ProductSelectionSection({
       axios.get("/api/products").then((res) => res.data.data),
   });
 
+  const filteredProducts =
+    data
+      ?.filter((prod) => prod.name.toLowerCase().includes(search.toLowerCase()))
+      .sort((a, b) => a.name.localeCompare(b.name)) || [];
+
   const toggleProduct = (productId: string) => {
     setExpandedProduct((prev) => (prev === productId ? null : productId));
     setSelectedSize(null);
@@ -139,8 +144,7 @@ export function ProductSelectionSection({
         {!hasSupplier &&
           !isPending &&
           !error &&
-          data?.map((product) => {
-            console.log({ product });
+          filteredProducts?.map((product) => {
             const isExpanded = expandedProduct === product.id;
             const activeVariants = product.productVariants;
             return (

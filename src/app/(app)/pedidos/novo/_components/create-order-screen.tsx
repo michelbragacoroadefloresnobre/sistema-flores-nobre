@@ -96,7 +96,6 @@ const CreateOrder = ({ serverData, phone }: Props) => {
     }
 
     setIsSubmitting(true);
-    console.log(data)
     try {
       const { message } = await axios
         .post("/api/orders", data)

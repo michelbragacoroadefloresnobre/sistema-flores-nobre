@@ -12,10 +12,14 @@ export const POST = createRoute(
   async (req, { body }) => {
     const order = await prisma.order.findUniqueOrThrow({
       where: { id: body.orderId },
-      include: { contact: { include: { city: true } } },
+      include: {
+        contact: { include: { city: true } },
+        orderProducts: { include: { variant: { include: { product: true } } } },
+      },
     });
 
-    if(!order.contact.city) throw new createHttpError.BadRequest("Cidade do contato não cadastrada");
+    if (!order.contact.city)
+      throw new createHttpError.BadRequest("Cidade do contato não cadastrada");
 
     const { payment } = await createPayment({
       body: {
@@ -25,7 +29,7 @@ export const POST = createRoute(
         status: PaymentStatus.ACTIVE,
         boletoDue:
           body.paymentType === PaymentType.BOLETO ? body.boletoDue : undefined,
-        productName: 'Flores',
+        productName: "Flores",
       },
       customer: order.contact,
       city: order.contact.city,
