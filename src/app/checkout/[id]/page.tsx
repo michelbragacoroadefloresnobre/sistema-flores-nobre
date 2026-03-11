@@ -26,7 +26,15 @@ export default async function Page({ params }: { params }) {
           },
         },
       },
-      include: { order: true },
+      include: {
+        order: {
+          include: {
+            orderProducts: {
+              include: { variant: { include: { product: true } } },
+            },
+          },
+        },
+      },
     });
 
     if (!payment)

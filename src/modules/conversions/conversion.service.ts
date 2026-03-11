@@ -14,11 +14,9 @@ export async function sendInitialTemplate({
   formId: string;
 }) {
   const message = await sendMessageSync(phone, "🌹");
-  console.log(formId);
   let sessionId: string | undefined = undefined;
 
   console.info(`Mensagem enviada para o numero ${phone}:`);
-  console.log(JSON.stringify(message));
 
   switch (message.status) {
     case "DELIVERED":
@@ -50,7 +48,6 @@ export async function sendInitialTemplate({
       const template = await sendTemplateSync(phone, "a85b1_formulariositefloresnobr");
 
       console.info(`Template enviado para o numero ${phone}:`);
-      console.log(JSON.stringify(template));
 
       if (isValidUUID(template.sessionId)) sessionId = template.sessionId;
       else if (isValidUUID(message.sessionId)) sessionId = message.sessionId;

@@ -12,9 +12,11 @@ import { createId } from "@paralleldrive/cuid2";
 import createHttpError from "http-errors";
 import { DateTime } from "luxon";
 import { sendBoleto } from "../message/boleto.service";
-import { deliveryPeriodMap } from "@/lib/utils";
+import { deliveryPeriodMap, getVariantLabel } from "@/lib/utils";
 import { format } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
+import { Prisma } from "@/generated/prisma/browser";
+import { PAYMENT_TYPE_MAP } from "@/lib/constants";
 
 export const shouldHandleInternally = (data: {
   type: PaymentType;
@@ -34,7 +36,11 @@ export const shouldHandleInternally = (data: {
 
 type NotifyPaymentParams = {
   payment: Payment;
-  order: Order;
+  order: Prisma.OrderGetPayload<{
+    include: {
+      orderProducts: { include: { variant: { include: { product: true } } } };
+    };
+  }>;
   customer: Contact;
 };
 
@@ -56,6 +62,24 @@ export async function notifyPayment({
     tributeCard: order.tributeCardPhrase,
   };
 
+  const uniqueProducts = order.orderProducts.reduce<
+    Map<string, { name: string; quantity: number }>
+  >((acc, op) => {
+    const key = op.variant.id;
+    const existing = acc.get(key);
+    if (existing) {
+      existing.quantity += 1;
+    } else {
+      acc.set(key, {
+        name: `${op.variant.product.name} - ${getVariantLabel({ size: op.variant.size, color: op.variant.color })}`,
+        quantity: 1,
+      });
+    }
+    return acc;
+  }, new Map());
+
+  const productList = [...uniqueProducts.values()];
+
   if (
     shouldHandleInternally({
       type: payment.type,
@@ -65,7 +89,9 @@ export async function notifyPayment({
     const message = buildLinkPaymentMessage({
       ...baseMessageParams,
       payment: payment.url || payment.text || null,
+      paymentType: PAYMENT_TYPE_MAP[payment.type] || null,
       deliveryHour: `Entrega até ${timeFormatted}`,
+      productList
     });
 
     await sendMessage(customer.phone, message);
@@ -76,7 +102,9 @@ export async function notifyPayment({
     const message = buildLinkPaymentMessage({
       ...baseMessageParams,
       payment: null,
+      paymentType: PAYMENT_TYPE_MAP[payment.type] || null,
       deliveryHour: `Até ${timeFormatted}`,
+      productList
     });
 
     // scheduleBoletoDueNotification logic here if needed...
@@ -96,7 +124,9 @@ export async function notifyPayment({
     const message = buildLinkPaymentMessage({
       ...baseMessageParams,
       payment: null,
+      paymentType: PAYMENT_TYPE_MAP[payment.type] || null,
       deliveryHour: `Até ${timeFormatted}`,
+      productList
     });
 
     await sendMessage(customer.phone, message);

@@ -161,6 +161,7 @@ export async function sendMessage(
   message: string | null | undefined,
   fileUrl?: string,
 ) {
+  console.log(message)
   const fetchResponse = await chatApi.post("/message/send", {
     from: CHANNEL_PHONES.FLORES_NOBRE,
     to: number,
@@ -203,11 +204,13 @@ export async function listSessions(props: {
 
 export const buildLinkPaymentMessage = (data: {
   payment?: string | null;
+  paymentType?: string | null;
   orderId: string;
   honoreeName: string;
   deliveryLocal: string;
   deliveryHour: string;
   tributeCard: string | null;
+  productList: { name: string; quantity: number }[];
 }) => {
   let message = `
 PEDIDO 📦 #NOBRE${data.orderId}
@@ -223,7 +226,23 @@ PEDIDO 📦 #NOBRE${data.orderId}
 
 📩 Cartão de Homenagem: 
 *${data.tributeCard}*
+
+🌹 Produtos:
 `;
+
+  data.productList.forEach((p) => {
+    message += `
+> *${p.name}*
+> Quantidade: *${p.quantity}*
+`;
+  });
+
+  if (data.paymentType)
+    message += `
+    💰 Método de pagamento:
+    ${data.paymentType}
+    `;
+
   if (data.payment) {
     message += `
 🔗 Pagamento:

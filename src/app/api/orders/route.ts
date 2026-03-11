@@ -174,6 +174,11 @@ export const POST = createRoute(
             },
           },
         },
+        include: {
+          orderProducts: {
+            include: { variant: { include: { product: true } } },
+          },
+        },
       });
 
       const { payment } = await createPayment({
