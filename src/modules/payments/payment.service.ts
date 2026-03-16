@@ -3,6 +3,7 @@ import {
   PaymentStatus,
   PaymentType,
   PersonType,
+  Role,
 } from "@/generated/prisma/enums";
 import { CNPJ, env, SP_TIMEZONE } from "@/lib/env";
 import { buildLinkPaymentMessage, sendMessage } from "@/lib/helena";
@@ -10,13 +11,14 @@ import { Pagarme } from "@/lib/pagarme";
 import prisma from "@/lib/prisma";
 import { createId } from "@paralleldrive/cuid2";
 import createHttpError from "http-errors";
-import { DateTime } from "luxon";
+
 import { sendBoleto } from "../message/boleto.service";
-import { deliveryPeriodMap, getVariantLabel } from "@/lib/utils";
+import { deliveryPeriodMap, getVariantLabel, hasRoles } from "@/lib/utils";
 import { format } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import { Prisma } from "@/generated/prisma/browser";
 import { PAYMENT_TYPE_MAP } from "@/lib/constants";
+import { authClient } from "@/lib/auth/client";
 
 export const shouldHandleInternally = (data: {
   type: PaymentType;
@@ -235,4 +237,65 @@ export async function createPayment({
   }
 
   throw new createHttpError.BadRequest("Método de pagamento desconhecido");
+}
+
+interface RefundPaymentInput {
+  paymentId: string;
+  reason: string;
+  amountInCents: number;
+}
+
+export async function refundPayment({ paymentId, reason, amountInCents }: RefundPaymentInput) {
+  if (!Number.isInteger(amountInCents) || amountInCents <= 0) {
+    throw createHttpError.BadRequest("Valor do estorno inválido");
+  }
+
+  const payment = await prisma.payment.findUnique({
+    where: { id: paymentId },
+  });
+
+  if (!payment) {
+    throw createHttpError.NotFound("Pagamento não encontrado");
+  }
+
+  if (!payment.externalId) {
+    throw createHttpError.BadRequest("Este pagamento não pode ser estornado (sem ID externo)");
+  }
+
+  if (payment.status !== PaymentStatus.PAID && payment.status !== PaymentStatus.REFUNDED) {
+    throw createHttpError.BadRequest("Somente pagamentos pagos ou parcialmente estornados podem ser reembolsados");
+  }
+
+  const paymentAmountInCents = Math.round(Number(payment.amount) * 100);
+  const previousRefundInCents = Math.round(Number(payment.refundAmount ?? 0) * 100);
+  const remainingInCents = paymentAmountInCents - previousRefundInCents;
+
+  if (amountInCents > remainingInCents) {
+    throw createHttpError.BadRequest(
+      `O valor do reembolso (R$ ${(amountInCents / 100).toFixed(2)}) excede o valor disponível (R$ ${(remainingInCents / 100).toFixed(2)})`,
+    );
+  }
+
+  await Pagarme.refundPayment(payment.externalId, amountInCents);
+
+  const newRefundAmountInCents = previousRefundInCents + amountInCents;
+
+  const updated = await prisma.payment.updateMany({
+    where: {
+      id: paymentId,
+      refundAmount: payment.refundAmount,
+    },
+    data: {
+      status: PaymentStatus.REFUNDED,
+      refundAmount: newRefundAmountInCents / 100,
+    },
+  });
+
+  if (updated.count === 0) {
+    throw createHttpError.Conflict(
+      "O pagamento foi modificado por outra operação. Verifique o status antes de tentar novamente.",
+    );
+  }
+
+  return await prisma.payment.findUniqueOrThrow({ where: { id: paymentId } });
 }

@@ -1,4 +1,9 @@
-import { DeliveryPeriod, ProductColor, ProductSize, Role } from "@/generated/prisma/enums";
+import {
+  DeliveryPeriod,
+  ProductColor,
+  ProductSize,
+  Role,
+} from "@/generated/prisma/enums";
 import {
   PRODUCT_COLOR_MAP,
   PRODUCT_SIZE_MAP,
@@ -236,3 +241,7 @@ export const deliveryPeriodMap: Record<DeliveryPeriod, string> = {
   BUSINESSHOURS: "Horário Comercial",
   EXPRESS: "Expressa",
 };
+
+export function hasRoles(roles: Role[], role: Role | null | any) {
+  return roles.includes(role || ("nothing" as any));
+}

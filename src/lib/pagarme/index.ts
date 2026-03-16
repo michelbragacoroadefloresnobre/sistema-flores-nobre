@@ -168,28 +168,28 @@ function buildOrderPayload(data: {
   return basePayload;
 }
 
-async function refundPayment(externalId: string, amount: number) {
-  const legacyApi = await getApi(CNPJ.FN);
+async function refundPayment(externalId: string, amountInCents: number) {
+  const api = await getApi(CNPJ.FN);
 
-  const results = await Promise.allSettled([
-    legacyApi.delete(`/charges/${externalId}`, {
-      data: { amount },
-    }),
-  ]);
+  let response;
+  try {
+    response = await api.delete(`/charges/${externalId}`, {
+      data: { amount: amountInCents },
+    });
+  } catch (error: any) {
+    const errorData = error.response?.data;
+    throw new createHttpError.BadGateway(
+      errorData?.message || "Erro ao comunicar com o gateway de pagamento",
+    );
+  }
 
-  const legacyPayment =
-    results[0].status === "fulfilled" ? results[0].value : null;
+  const status = response.data?.last_transaction?.status;
+  const VALID_STATUSES = ["refunded", "pending_refund", "partial_refunded"];
 
-  const legacyStatus = legacyPayment?.data.last_transaction?.status;
-
-  const checkIfFailed = (status: string) =>
-    status !== "refunded" &&
-    status !== "pending_refund" &&
-    status !== "partial_refunded";
-
-  if (checkIfFailed(legacyStatus)) {
-    console.error(JSON.stringify({ legacyPayment }, null, 2));
-    throw new createHttpError.BadRequest("Erro ao estornar pagamento");
+  if (!VALID_STATUSES.includes(status)) {
+    throw new createHttpError.BadGateway(
+      "O gateway retornou um status inesperado para o estorno",
+    );
   }
 
   return true;

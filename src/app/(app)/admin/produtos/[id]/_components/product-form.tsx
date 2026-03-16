@@ -107,7 +107,6 @@ export const ProductForm = ({
               form={form}
               data={product.productVariants}
               onChange={(variations) => {
-                console.log({ variations });
                 form.setValue(
                   "variations",
                   variations.map((v) => ({

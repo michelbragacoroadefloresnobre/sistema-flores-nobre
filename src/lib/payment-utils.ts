@@ -8,17 +8,18 @@ function getOrderTotalAmount(payments: Payment[]) {
   return payments
     .filter(
       (p) =>
-        p.status === PaymentStatus.ACTIVE || p.status === PaymentStatus.PAID,
-      // isRefunded(p) === "partially",
+        p.status === PaymentStatus.ACTIVE ||
+        p.status === PaymentStatus.PAID ||
+        isRefunded(p) === "partially",
     )
     .reduce((v, p) => getPaymentValue(p) + v, 0);
 }
 
-// function isRefunded(payment: Payment) {
-//   if (payment.status !== "refunded") return null;
-//   if (getPaymentValue(payment) === 0) return "completely";
-//   else return "partially";
-// }
+function isRefunded(payment: Payment) {
+  if (payment.status !== PaymentStatus.REFUNDED) return null;
+  if (getPaymentValue(payment) === 0) return "completely";
+  else return "partially";
+}
 
 function getPaymentValue(payment: Payment) {
   const paymentValue = Number(payment.amount) || 0;
@@ -28,8 +29,7 @@ function getPaymentValue(payment: Payment) {
 
 function getPaidPayments(payments: Payment[]) {
   return payments.filter(
-    (p) => p.status === PaymentStatus.PAID,
-    // || isRefunded(p) === "partially",
+    (p) => p.status === PaymentStatus.PAID || isRefunded(p) === "partially",
   );
 }
 
@@ -46,28 +46,27 @@ function hasRequiredPayments(payments: Payment[]) {
 function isPaid(payments: Payment[]) {
   const pending = payments.filter((p) => p.status === PaymentStatus.ACTIVE);
   const hasPaidPayment = payments.some(
-    (p) => p.status === PaymentStatus.PAID,
-    //  || isRefunded(p) === "partially",
+    (p) => p.status === PaymentStatus.PAID || isRefunded(p) === "partially",
   );
   return pending.length === 0 && hasPaidPayment;
 }
 
-// function getOrderPayments(payments: Pagamento[], orderId: string) {
-//   return payments.filter((p) => p.PedidoId === orderId);
-// }
+function getOrderPayments(payments: Payment[], orderId: string) {
+  return payments.filter((p) => p.orderId === orderId);
+}
 
-// function getValidPayments(payments: Pagamento[]) {
-//   return payments.filter(
-//     (p) =>
-//       p.Status === "ativo" ||
-//       p.Status === "pago" ||
-//       isRefunded(p) === "partially",
-//   );
-// }
+function getValidPayments(payments: Payment[]) {
+  return payments.filter(
+    (p) =>
+      p.status === PaymentStatus.ACTIVE||
+      p.status === PaymentStatus.PAID ||
+      isRefunded(p) === "partially",
+  );
+}
 
-// function isValidPaymentStatus(status: string) {
-//   return [""];
-// }
+function isValidPaymentStatus(status: string) {
+  return [""];
+}
 
 export const PaymentUtils = {
   getOrderTotalAmount,
@@ -75,8 +74,8 @@ export const PaymentUtils = {
   getPaidPayments,
   hasRequiredPayments,
   isPaid,
-  // isRefunded,
-  // getOrderPayments,
-  // getValidPayments,
-  // isValidPaymentStatus,
+  isRefunded,
+  getOrderPayments,
+  getValidPayments,
+  isValidPaymentStatus,
 };
