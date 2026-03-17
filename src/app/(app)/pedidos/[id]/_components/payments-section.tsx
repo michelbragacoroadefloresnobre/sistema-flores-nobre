@@ -140,8 +140,8 @@ export function PaymentsSection({
         return "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-300";
       case PaymentStatus.CANCELLED:
         return "bg-rose-100 text-rose-700 hover:bg-rose-100 border-rose-300";
-      // case "refunded":
-      //   return "bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-300";
+      case PaymentStatus.REFUNDED:
+        return "bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-300";
       default:
         return "bg-stone-100 text-stone-700 hover:bg-stone-100 border-stone-300";
     }
@@ -155,8 +155,8 @@ export function PaymentsSection({
         return "PAGO";
       case PaymentStatus.CANCELLED:
         return "CANCELADO";
-      // case PaymentStatus.REFUNDED:
-      //   return "ESTORNADO";
+      case PaymentStatus.REFUNDED:
+        return "ESTORNADO";
       case PaymentStatus.PROCESSING:
         return "PROCESSANDO";
       default:

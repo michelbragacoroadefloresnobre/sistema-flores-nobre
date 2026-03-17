@@ -392,6 +392,7 @@ enum PaymentStatus {
   PAID
   CANCELLED
   PROCESSING
+  REFUNDED
 }
 
 enum ProductSize {

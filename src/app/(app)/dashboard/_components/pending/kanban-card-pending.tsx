@@ -78,7 +78,6 @@ export function KanbanCardPending({ order }: { order: iOrderPending }) {
       queryClient.invalidateQueries({ queryKey: KANBAN_QUERY_KEY });
     }
   };
-  console.log(order);
   return (
     <div
       className={cn(

@@ -11,6 +11,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -19,18 +31,27 @@ import {
   Payment,
   PaymentStatus,
   PaymentType,
+  Role,
 } from "@/generated/prisma/browser";
+import { authClient } from "@/lib/auth/client";
 import { PaymentUtils } from "@/lib/payment-utils";
 import { revalidatePath } from "@/lib/revalidate-sc";
-import { safeCopyToClipboard } from "@/lib/utils";
+import {
+  cn,
+  convertCurrencyInput,
+  hasRoles,
+  safeCopyToClipboard,
+} from "@/lib/utils";
 import { PopoverClose } from "@radix-ui/react-popover";
 import axios from "axios";
 import {
   Check,
   Copy,
+  DollarSign,
   Download,
   ImageIcon,
   Loader2,
+  Undo2,
   Upload,
   X,
 } from "lucide-react";
@@ -363,71 +384,302 @@ export function PaymentsSectionActionButtons({
     }
   };
 
-  // const canRefundPayment = () => {
-  //   return (
-  //     // PaymentUtils.isRefunded(payment) === "partially") &&
-  //     payment.status === PaymentStatus.PAID &&
-  //     [PaymentType.PIX, PaymentType.CARD_CREDIT].includes(
-  //       payment.type as any,
-  //     ) &&
-  //     !!payment.externalId
-  //   );
-  // };
+  const canRefundPayment = () => {
+    const isPaidOrPartiallyRefunded =
+      payment.status === PaymentStatus.PAID ||
+      PaymentUtils.isRefunded(payment) === "partially";
 
-  // const RefundPaymentButton = () => {
-  //   const { data: auth } = authClient.useSession();
+    return isPaidOrPartiallyRefunded && !!payment.externalId;
+  };
 
-  //   const [isRefundingPayment, setIsRefundingPayment] =
-  //     useState<boolean>(false);
-  //   const [refundDialogOpen, setRefundDialogOpen] = useState(false);
+  const RefundPaymentButton = () => {
+    const { data } = authClient.useSession();
 
-  //   if (!canRefundPayment() || !auth?.user.role) return;
+    const [isRefundingPayment, setIsRefundingPayment] = useState(false);
+    const [refundDialogOpen, setRefundDialogOpen] = useState(false);
+    const [step, setStep] = useState<"type" | "confirm">("type");
+    const [refundType, setRefundType] = useState<"full" | "partial">("full");
+    const [refundAmount, setRefundAmount] = useState("");
+    const [refundReason, setRefundReason] = useState("");
 
-  //   const isAllowed = hasRoles([Role.SUPERVISOR], auth.user.role as Role);
+    if (!canRefundPayment() || !data?.user.role) return;
 
-  //   const handleRefundPayment = async (
-  //     paymentId: string,
-  //     amount: string,
-  //     reason: string,
-  //   ) => {
-  //     toast.info("Estornando pagamento...");
+    const isAllowed = hasRoles(
+      [Role.SUPERVISOR, Role.ADMIN, Role.OWNER],
+      data?.user.role as Role,
+    );
 
-  //     setIsRefundingPayment(true);
-  //     const res = await refundPayment(paymentId, reason, amount);
+    if (!isAllowed) return;
 
-  //     if (res.error || !res.data)
-  //       return toast.error(res.error || "Erro ao estornar pagamento");
+    const remainingValue = PaymentUtils.getPaymentValue(payment);
+    const paymentAmount = Number(payment.amount);
 
-  //     updatePaymentView(res.data);
+    const resetDialog = () => {
+      setStep("type");
+      setRefundType("full");
+      setRefundAmount("");
+      setRefundReason("");
+    };
 
-  //     setRefundDialogOpen(false);
-  //     setIsRefundingPayment(false);
+    const handleOpenChange = (open: boolean) => {
+      if (!open) resetDialog();
+      setRefundDialogOpen(open);
+    };
 
-  //     toast.success(res.success);
-  //   };
-  //   return (
-  //     <>
-  //       <RefundDialog
-  //         open={refundDialogOpen}
-  //         onOpenChange={() => {}}
-  //         onConfirm={handleRefundPayment}
-  //         isAllowed={isAllowed}
-  //         payment={payment}
-  //       />
-  //       <Button
-  //         className="h-7 w-7 p-0"
-  //         size={"icon"}
-  //         variant={"ghost"}
-  //         disabled={isRefundingPayment}
-  //         onClick={() => {
-  //           setRefundDialogOpen(true);
-  //         }}
-  //       >
-  //         <Undo2 className="size-3.5" />
-  //       </Button>
-  //     </>
-  //   );
-  // };
+    const handleNext = () => {
+      if (refundType === "partial") {
+        const amount = Number(refundAmount);
+        if (!amount || amount <= 0) {
+          return toast.error("Informe um valor válido para o estorno");
+        }
+        if (amount > remainingValue) {
+          return toast.error(
+            `O valor máximo para estorno é ${formatCurrency(remainingValue)}`,
+          );
+        }
+      }
+      setStep("confirm");
+    };
+
+    const handleBack = () => {
+      setStep("type");
+    };
+
+    const handleRefundPayment = async () => {
+      if (!refundReason.trim()) {
+        return toast.error("Informe o motivo do estorno");
+      }
+
+      const amount =
+        refundType === "full" ? remainingValue : Number(refundAmount);
+
+      toast.info("Estornando pagamento...");
+      setIsRefundingPayment(true);
+
+      try {
+        const { message } = await axios
+          .post(`/api/payments/${payment.id}/refund`, {
+            amount,
+            reason: refundReason.trim(),
+          })
+          .then((res) => res.data);
+
+        handleOpenChange(false);
+        toast.success(message);
+      } catch (e: any) {
+        toast.error(e.response?.data?.error || "Erro ao estornar pagamento");
+      } finally {
+        setIsRefundingPayment(false);
+        revalidatePath(`/pedidos/${payment.orderId}`);
+      }
+    };
+
+    return (
+      <>
+        <div>
+          <Dialog open={refundDialogOpen} onOpenChange={handleOpenChange}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-emerald-600" />
+                  Estornar Pagamento
+                </DialogTitle>
+                <DialogDescription>
+                  {step === "type"
+                    ? "Escolha o tipo de estorno e informe o motivo. Esta ação não pode ser desfeita."
+                    : "Confirme os dados do estorno abaixo."}
+                </DialogDescription>
+              </DialogHeader>
+
+              {step === "type" ? (
+                <div className="space-y-5 py-1">
+                  <div className="flex items-center justify-between rounded-lg border bg-muted/40 px-4 py-3">
+                    <span className="text-sm text-muted-foreground">
+                      Valor do Pagamento:
+                    </span>
+                    <span className="text-base font-semibold">
+                      {formatCurrency(paymentAmount)}
+                    </span>
+                  </div>
+
+                  {Number(payment.refundAmount) > 0 && (
+                    <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+                      <span className="text-sm text-blue-700">
+                        Já estornado:
+                      </span>
+                      <span className="text-base font-semibold text-blue-700">
+                        {formatCurrency(Number(payment.refundAmount))}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">
+                      Tipo de Estorno
+                    </Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setRefundType("full")}
+                        className={cn(
+                          "flex w-full rounded-lg border p-4 text-left transition-colors",
+                          refundType === "full"
+                            ? "border-emerald-500"
+                            : "hover:bg-muted/50",
+                        )}
+                      >
+                        <div>
+                          <p className="text-sm font-medium">Estorno Total</p>
+                          <p className="text-xs text-muted-foreground">
+                            Estornar o valor completo de{" "}
+                            {formatCurrency(remainingValue)}
+                          </p>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setRefundType("partial")}
+                        className={cn(
+                          "flex w-full rounded-lg border p-4 text-left transition-colors",
+                          refundType === "partial"
+                            ? "border-emerald-500"
+                            : "hover:bg-muted/50",
+                        )}
+                      >
+                        <div>
+                          <p className="text-sm font-medium">Estorno Parcial</p>
+                          <p className="text-xs text-muted-foreground">
+                            Especificar um valor menor que o total
+                          </p>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
+                  {refundType === "partial" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="refund-amount">Valor do Estorno</Label>
+                      <Input
+                        id="refund-amount"
+                        type="text"
+                        placeholder="R$ 0,00"
+                        value={refundAmount ? "R$ " + refundAmount : ""}
+                        onChange={(e) => {
+                          const input = convertCurrencyInput(e.target.value);
+                          if (input) setRefundAmount(input);
+                          else setRefundAmount("");
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="refund-reason">Motivo do Estorno</Label>
+                    <Textarea
+                      id="refund-reason"
+                      placeholder="Descreva o motivo do estorno..."
+                      value={refundReason}
+                      onChange={(e) => setRefundReason(e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+
+                  <DialogFooter className="gap-2 sm:gap-0">
+                    <DialogClose asChild>
+                      <Button type="button" variant="outline">Cancelar</Button>
+                    </DialogClose>
+                    <Button
+                      type="button"
+                      onClick={handleNext}
+                      className="bg-emerald-700 hover:bg-emerald-800"
+                    >
+                      Próximo
+                    </Button>
+                  </DialogFooter>
+                </div>
+              ) : (
+                <div className="space-y-5 py-1">
+                  <div className="rounded-lg border bg-muted/40 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        Tipo:
+                      </span>
+                      <span className="text-sm font-medium">
+                        {refundType === "full"
+                          ? "Estorno Total"
+                          : "Estorno Parcial"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        Valor do estorno:
+                      </span>
+                      <span className="text-base font-semibold text-red-600">
+                        {formatCurrency(
+                          refundType === "full"
+                            ? remainingValue
+                            : Number(refundAmount),
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        Valor restante após estorno:
+                      </span>
+                      <span className="text-base font-semibold">
+                        {formatCurrency(
+                          refundType === "full"
+                            ? 0
+                            : remainingValue - Number(refundAmount),
+                        )}
+                      </span>
+                    </div>
+                    {refundReason && (
+                      <div className="border-t pt-3">
+                        <span className="text-xs text-muted-foreground">
+                          Motivo:
+                        </span>
+                        <p className="text-sm mt-1">{refundReason}</p>
+                      </div>  
+                    )}
+                  </div>
+
+                  <DialogFooter className="gap-2 sm:gap-0">
+                    <Button type="button" variant="outline" onClick={handleBack}>
+                      Voltar
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      disabled={isRefundingPayment}
+                      onClick={handleRefundPayment}
+                    >
+                      {isRefundingPayment && (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      )}
+                      Confirmar Estorno
+                    </Button>
+                  </DialogFooter>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        <Button
+          className="h-7 w-7 p-0"
+          size="icon"
+          variant="ghost"
+          type="button"
+          disabled={isRefundingPayment}
+          onClick={() => setRefundDialogOpen(true)}
+        >
+          <Undo2 className="size-3.5" />
+        </Button>
+      </>
+    );
+  };
 
   const CancelPaymentButton = () => {
     const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -453,45 +705,23 @@ export function PaymentsSectionActionButtons({
     };
 
     const canCancelPayment = () => {
+      if (payment.status === PaymentStatus.PAID) return false;
+      if (payment.status !== PaymentStatus.ACTIVE) return false;
+
       switch (payment.type) {
         case PaymentType.PIX:
         case PaymentType.CARD_CREDIT:
         case PaymentType.BOLETO:
-          if (payment.status === PaymentStatus.ACTIVE) return true;
-          if (payment.status === PaymentStatus.PAID && !payment.externalId)
-            return true;
-          return false;
         case PaymentType.MONEY:
         case PaymentType.PATNERSHIP:
         case PaymentType.PIX_CNPJ:
-          switch (payment.status) {
-            case PaymentStatus.ACTIVE:
-            case PaymentStatus.PAID:
-              return true;
-          }
-          return false;
+          return true;
         default:
           return false;
       }
     };
 
-    // const isVisible = () => {
-    //   switch (payment.type) {
-    //     case PaymentType.PIX:
-    //     case PaymentType.CARD_CREDIT:
-    //       if (canRefundPayment()) return false;
-    //       return true;
-    //     case PaymentType.BOLETO:
-    //     case PaymentType.MONEY:
-    //     case PaymentType.PATNERSHIP:
-    //     case PaymentType.PIX_CNPJ:
-    //       return true;
-    //     default:
-    //       return false;
-    //   }
-    // };
-
-    // if (!isVisible()) return;
+    if (!canCancelPayment()) return;
 
     return (
       <>
@@ -522,11 +752,8 @@ export function PaymentsSectionActionButtons({
           className="h-7 w-7 p-0"
           size={"icon"}
           variant={"ghost"}
-          disabled={!canCancelPayment()}
           type="button"
-          onClick={() => {
-            setCancelDialogOpen(true);
-          }}
+          onClick={() => setCancelDialogOpen(true)}
         >
           <X className="size-3.5" />
         </Button>
@@ -540,7 +767,7 @@ export function PaymentsSectionActionButtons({
       <SubmitPaidStatusButton />
       <DownloadPaymentButton />
       <CopyPaymentContentButton />
-      {/* <RefundPaymentButton /> */}
+      <RefundPaymentButton />
       <CancelPaymentButton />
     </>
   );

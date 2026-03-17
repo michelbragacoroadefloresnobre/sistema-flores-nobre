@@ -119,7 +119,6 @@ export function EditOrderFormSectionContact({ form, onBack }: Props) {
     try {
       const response = await axios.get(`https://publica.cnpj.ws/cnpj/${raw}`);
       if (response.data) {
-        console.log({ data: response.data });
         const data = response.data;
         const inscricoesEstaduais =
           data.estabelecimento.inscricoes_estaduais?.filter(
