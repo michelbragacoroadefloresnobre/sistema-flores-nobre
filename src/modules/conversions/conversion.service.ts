@@ -45,7 +45,7 @@ export async function sendInitialTemplate({
     }
     case "QUEUED": {
       await cancelMessage(message.id);
-      const template = await sendTemplateSync(phone, "a85b1_formulariositefloresnobr");
+      const template = await sendTemplateSync(phone, "2c7dd_formulariositeutili");
 
       console.info(`Template enviado para o numero ${phone}:`);
 

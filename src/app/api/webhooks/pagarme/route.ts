@@ -54,12 +54,12 @@ export async function POST(req: NextRequest) {
 
     console.log(JSON.stringify(event, null, 2));
 
-    if (event.type === "order.paid") proccessPaidOrder(event);
+    if (event.type === "order.paid") await proccessPaidOrder(event);
     else if (
       event.type === "order.canceled" ||
       event.type === "checkout.canceled"
     )
-      proccessCancelPayment(event);
+      await proccessCancelPayment(event);
   } catch (e: any) {
     if (isHttpError(e)) console.warn(e.message);
     else console.log("Erro desconhecido ao processar pagamento");
