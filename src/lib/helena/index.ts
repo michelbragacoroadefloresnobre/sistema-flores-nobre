@@ -2,6 +2,7 @@ import axios from "axios";
 import createHttpError from "http-errors";
 import { ListConversationsResponse, ListMessagesResponse } from "./types";
 import { CHANNEL_PHONES } from "../constants";
+import prisma from "../prisma";
 
 const chatApi = axios.create({
   baseURL: "https://api.helena.run/chat/v1",
@@ -102,11 +103,19 @@ export async function sendTemplateSync(
   departmentId?: string,
   forceStartSession?: boolean,
 ) {
+  const user = await prisma.contact.findFirst({
+    where:{
+    phone: number
+  }})
+  
+
   const body: any = {
     from: CHANNEL_PHONES.FLORES_NOBRE,
     to: number,
     body: {
       templateId,
+      parameters: 
+        {"NOME": user?.name?.split(" ")[0]}
     },
     options: {
       hiddenSession: true,
