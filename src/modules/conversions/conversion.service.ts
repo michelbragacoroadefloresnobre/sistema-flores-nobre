@@ -1,8 +1,6 @@
 import { ConversionMessageType } from "@/generated/prisma/enums";
-import { env } from "@/lib/env";
 import { cancelMessage, sendMessageSync, sendTemplateSync } from "@/lib/helena";
 import prisma from "@/lib/prisma";
-import { scheduleUrlCall } from "@/lib/scheduler";
 import { isValidUUID } from "@/lib/utils";
 import createHttpError from "http-errors";
 
@@ -33,19 +31,11 @@ export async function sendInitialTemplate({
         },
       });
 
-      await scheduleUrlCall({
-        triggerIn: 6 * 60 * 60,
-        url: `${env.NEXT_PUBLIC_WEBSITE_URL}/api/webhooks/conversions/feedback`,
-        data: {
-          formId: formId,
-        },
-      });
-
       break;
     }
     case "QUEUED": {
       await cancelMessage(message.id);
-      const template = await sendTemplateSync(phone, "2c7dd_formulariositeutili");
+      const template = await sendTemplateSync(phone, "77dca_formulariositevariavelno");
 
       console.info(`Template enviado para o numero ${phone}:`);
 
@@ -60,22 +50,6 @@ export async function sendInitialTemplate({
           formId,
         },
       });
-
-      await scheduleUrlCall({
-        triggerIn: 5 * 60,
-        url: `${env.NEXT_PUBLIC_WEBSITE_URL}/api/webhooks/conversions/second-attempt`,
-        data: {
-          formId,
-        },
-      });
-      await scheduleUrlCall({
-        triggerIn: 6 * 60 * 60,
-        url: `${env.NEXT_PUBLIC_WEBSITE_URL}/api/webhooks/conversions/feedback`,
-        data: {
-          formId: formId,
-        },
-      });
-
       break;
     }
     default:

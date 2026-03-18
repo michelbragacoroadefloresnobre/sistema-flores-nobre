@@ -12,7 +12,7 @@ export default async function UserLayout({
     headers: await headers(),
   });
 
-  if (!session) return redirect("/auth/login");
+ if (!session) return redirect("/auth/login");
   const role = session?.user.role;
 
   if (role !== Role.ADMIN && role !== Role.SUPERVISOR && role !== Role.OWNER) {
