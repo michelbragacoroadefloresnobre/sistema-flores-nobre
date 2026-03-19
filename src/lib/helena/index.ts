@@ -115,13 +115,13 @@ export async function sendTemplateSync(
     body: {
       templateId,
       parameters: 
-        {"NOME": user?.name?.split(" ")[0]}
+        {NOME: user?.name?.split(" ")[0] || ""}
     },
     options: {
       hiddenSession: true,
     },
   };
-
+  console.log(body)
   if (userId) body.user.id = userId;
   if (departmentId) body.department.id = departmentId;
   if (forceStartSession) body.options.forceStartSession = forceStartSession;
