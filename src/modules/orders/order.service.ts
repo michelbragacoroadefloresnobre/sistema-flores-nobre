@@ -53,7 +53,7 @@ async function sendConversionToN8n(orderId: string) {
     .minus({ months: 2 })
     .toJSDate();
 
-  const form = await prisma.form.findFirst({
+  const campaign = await prisma.campaignData.findFirst({
     where: {
       phone: order.contact.phone,
       createdAt: { gte: twoMonthsAgo },
@@ -79,9 +79,9 @@ async function sendConversionToN8n(orderId: string) {
     FinalizadoEm: DateTime.now()
       .setZone(SP_TIMEZONE)
       .toFormat("yyyy-MM-dd HH:mm:ssZZ"),
-    Gclid: form?.gclid || "",
-    Gbraid: form?.gbraid || "",
-    Wbraid: form?.wbraid || "",
+    Gclid: campaign?.gclid || "",
+    Gbraid: campaign?.gbraid || "",
+    Wbraid: campaign?.wbraid || "",
     PedidoId: order.id,
   });
 }

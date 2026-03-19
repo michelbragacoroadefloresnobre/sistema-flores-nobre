@@ -202,9 +202,6 @@ model Form {
   phone              String
   sellerHelenaId     String?
   source             String?
-  gclid              String?
-  gbraid             String?
-  wbraid             String?
   isCustomer         Boolean?
   cancelReason       String?
   createdAt          DateTime            @default(now())
@@ -215,11 +212,12 @@ model Form {
 }
 
 model CampaignData {
-  id     String  @id @default(cuid())
-  phone  String
-  gclid  String? @unique
-  gbraid String?
-  wbraid String?
+  id        String   @id @default(cuid())
+  phone     String
+  gclid     String?
+  gbraid    String?
+  wbraid    String?
+  createdAt DateTime @default(now())
 
   @@map("campaign_data")
 }
