@@ -141,23 +141,23 @@ function getMeta(metaData: WooOrderEvent["meta_data"], key: string) {
   return metaData.find((m) => m.key === key)?.value ?? null;
 }
 
-function parseDeliveryDate(input: string | null): Date {
-  if (!input) return new Date();
+function parseDeliveryDate(input: string | null): DateTime {
+  if (input) {
+    const isoMatch = input.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoMatch) {
+      const dt = DateTime.fromISO(isoMatch[0], { zone: SP_TIMEZONE });
+      if (dt.isValid) return dt;
+    }
 
-  const isoMatch = input.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (isoMatch) {
-    const date = new Date(input);
-    if (!isNaN(date.getTime())) return date;
+    const brMatch = input.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (brMatch) {
+      const [, d, m, y] = brMatch;
+      const dt = DateTime.fromISO(`${y}-${m}-${d}`, { zone: SP_TIMEZONE });
+      if (dt.isValid) return dt;
+    }
   }
 
-  const brMatch = input.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (brMatch) {
-    const [, d, m, y] = brMatch;
-    const date = new Date(`${y}-${m}-${d}`);
-    if (!isNaN(date.getTime())) return date;
-  }
-
-  return new Date();
+  return DateTime.now().setZone(SP_TIMEZONE);
 }
 
 function resolvePersonType(document: string): "PF" | "PJ" {
@@ -279,11 +279,8 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
       if (!hour)
         throw new createHttpError.BadRequest("Periodo informado é invalido");
 
-      deliveryUntil = DateTime.fromISO(deliveryDate.toDateString(), {
-        zone: SP_TIMEZONE,
-      }).set({ hour, minute: 0, millisecond: 0 });
+      deliveryUntil = deliveryDate.set({ hour });
     }
-
     const giftOption = getMeta(meta_data, "_gift_card_option") === "yes";
     const honoreeName = getMeta(meta_data, "_gift_card_to") || "";
     const tributeCardPhrase = getMeta(meta_data, "_gift_card_message") || null;
