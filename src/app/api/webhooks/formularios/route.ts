@@ -92,11 +92,19 @@ export async function POST(request: Request) {
         type: FormType.FORM_FN,
         status: FormStatus.NOT_CONVERTED,
         source: sourceData || campaignData?.utm_source || undefined,
-        gclid: campaignData?.gclid || undefined,
-        gbraid: campaignData?.gbraid || undefined,
-        wbraid: campaignData?.wbraid || undefined,
       },
     });
+
+    if (campaignData?.gclid || campaignData?.gbraid || campaignData?.wbraid) {
+      await prisma.campaignData.create({
+        data: {
+          phone,
+          gclid: campaignData.gclid || undefined,
+          gbraid: campaignData.gbraid || undefined,
+          wbraid: campaignData.wbraid || undefined,
+        },
+      });
+    }
 
     try {
       await sendInitialTemplate({ phone, formId: form.id });
