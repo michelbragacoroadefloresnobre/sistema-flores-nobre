@@ -36,9 +36,13 @@ export async function POST(request: Request) {
 
     let campaignData: CampaignData | undefined;
     try {
-      campaignData = body.campaignData
-        ? JSON.parse(body.campaignData)
-        : undefined;
+      if (typeof body.campaignData === "string") {
+        campaignData = body.campaignData
+          ? JSON.parse(body.campaignData)
+          : undefined;
+      } else if (typeof body.campaignData === "object" && body.campaignData) {
+        campaignData = body.campaignData;
+      }
     } catch (e) {
       console.error("Erro ao fazer parse do utm:", e);
     }
@@ -88,6 +92,9 @@ export async function POST(request: Request) {
         type: FormType.FORM_FN,
         status: FormStatus.NOT_CONVERTED,
         source: sourceData || campaignData?.utm_source || undefined,
+        gclid: campaignData?.gclid || undefined,
+        gbraid: campaignData?.gbraid || undefined,
+        wbraid: campaignData?.wbraid || undefined,
       },
     });
 

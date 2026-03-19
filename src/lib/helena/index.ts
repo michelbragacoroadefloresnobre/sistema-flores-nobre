@@ -99,13 +99,14 @@ export async function listMessages(sessionId: string) {
 export async function sendTemplateSync(
   number: string,
   templateId: string | null | undefined,
+  formId?: string,
   userId?: string,
   departmentId?: string,
   forceStartSession?: boolean,
 ) {
-  const user = await prisma.contact.findFirst({
+  const form = await prisma.form.findFirst({
     where:{
-    phone: number
+    id: formId
   }})
   
 
@@ -115,7 +116,7 @@ export async function sendTemplateSync(
     body: {
       templateId,
       parameters: 
-        {NOME: user?.name?.split(" ")[0] || ""}
+        {NOME: form?.name?.split(" ")[0] || ""}
     },
     options: {
       hiddenSession: true,
