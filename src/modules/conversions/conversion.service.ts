@@ -33,6 +33,7 @@ export async function sendInitialTemplate({
 
       break;
     }
+    case "WAIT_REPLY":
     case "QUEUED": {
       await cancelMessage(message.id);
       const template = await sendTemplateSync(phone, "77dca_formulariositevariavelno", formId);
