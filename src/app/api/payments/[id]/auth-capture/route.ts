@@ -7,6 +7,7 @@ import { CNPJ } from "@/lib/env";
 import { createRoute } from "@/lib/handler/route-handler";
 import { Pagarme } from "@/lib/pagarme";
 import prisma from "@/lib/prisma";
+import { sendPromotionalMessage } from "@/modules/payments/payment.service";
 import createHttpError from "http-errors";
 import z from "zod";
 
@@ -82,6 +83,9 @@ export const POST = createRoute(
           paidAt: new Date().toISOString(),
         },
       });
+
+      sendPromotionalMessage(payment.order.contact.phone, payment.order.id)
+        .catch((e) => console.error("[Promocional] Erro ao enviar:", e));
 
       return "Pagamento finalizado com sucesso!";
     } catch (error: any) {

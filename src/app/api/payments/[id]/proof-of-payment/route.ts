@@ -2,6 +2,7 @@ import { PaymentStatus } from "@/generated/prisma/enums";
 import { env } from "@/lib/env";
 import { createRoute } from "@/lib/handler/route-handler";
 import prisma from "@/lib/prisma";
+import { sendPromotionalMessage } from "@/modules/payments/payment.service";
 import createHttpError from "http-errors";
 import z from "zod";
 
@@ -36,6 +37,14 @@ export const POST = createRoute(
       throw new createHttpError.BadRequest(
         "Envio de foto indisponivel para este pagamento",
       );
+
+    const payment = await prisma.payment.findUniqueOrThrow({
+      where: { id },
+      include: { order: { include: { contact: true } } },
+    });
+
+    sendPromotionalMessage(payment.order.contact.phone, payment.order.id)
+      .catch((e) => console.error("[Promocional] Erro ao enviar:", e));
 
     return "Foto enviada com sucesso";
   },
