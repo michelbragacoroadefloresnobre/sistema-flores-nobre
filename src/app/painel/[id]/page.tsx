@@ -89,19 +89,16 @@ export default async function Page({
   let supplierPanel = await prisma.supplierPanel.findUnique({
     where: { id },
     include: {
-      supplierPanelPhotos: {
+      supplierPanelPhotos: true,
+      order: {
         include: {
-          orderProduct: {
+          orderProducts: {
             include: {
               variant: { include: { product: { select: { name: true } } } },
             },
           },
         },
-        orderBy: {
-          orderProductId: "asc",
-        },
       },
-      order: true,
     },
   });
 
@@ -153,28 +150,32 @@ export default async function Page({
 
   const getActionSectionContent = () => {
     switch (order.orderStatus) {
-      case OrderStatus.PRODUCING:
+      case OrderStatus.PRODUCING: {
+        const photo = supplierPanel.supplierPanelPhotos[0];
         return (
           <>
             <div className="text-center mb-6">
-              <h2 className="text-xl font-semibold mb-2">Gerenciar Fotos</h2>
+              <h2 className="text-xl font-semibold mb-2">Gerenciar Foto</h2>
               <p className="text-muted-foreground">
-                Visualize o produto e anexe sua foto
+                Visualize os produtos de referência e envie a foto do pedido
               </p>
             </div>
             <ImageSection
-              products={supplierPanel.supplierPanelPhotos.map((photo) => ({
+              referencePhotos={order.orderProducts.map((op) => ({
+                name: `${op.variant.product.name} (${getVariantLabel({ size: op.variant.size, color: op.variant.color })})`,
+                imageUrl: op.variant.imageUrl,
+              }))}
+              photo={photo ? {
                 spPhotoId: photo.id,
-                referenceUrl: photo.orderProduct.variant.imageUrl,
                 status: photo.status,
                 imageUrl: photo.imageUrl,
                 rejectionReason: photo.rejectionReason,
-                name: `${photo.orderProduct.variant.product.name} (${getVariantLabel({ size: photo.orderProduct.variant.size, color: photo.orderProduct.variant.color })})`,
-              }))}
+              } : undefined}
               supplierPanelId={supplierPanel.id}
             />
           </>
         );
+      }
       case OrderStatus.DELIVERING_ON_ROUTE:
         return <DeliveringSection panelId={supplierPanel.id} />;
       case OrderStatus.DELIVERING_DELIVERED:
