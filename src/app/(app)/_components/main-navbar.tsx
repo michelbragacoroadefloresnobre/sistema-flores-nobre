@@ -27,6 +27,7 @@ import {
   ChevronDown,
   Eye,
   EyeOff,
+  Gift,
   LogOut,
   Monitor,
   Moon,
@@ -355,15 +356,26 @@ export function MainNavbar() {
                   <DropdownMenuSeparator className="my-1 bg-border" />
 
                   {user?.role !== Role.SELLER && (
-                    <DropdownMenuItem
-                      asChild
-                      className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-2 text-xs focus:bg-accent"
-                    >
-                      <Link href="/configuracoes/usuarios">
-                        <Settings className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span>Configurações</span>
-                      </Link>
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem
+                        asChild
+                        className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-2 text-xs focus:bg-accent"
+                      >
+                        <Link href="/configuracoes/usuarios">
+                          <Settings className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span>Configurações</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        asChild
+                        className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-2 text-xs focus:bg-accent"
+                      >
+                        <Link href="/configuracoes/cupons">
+                          <Gift className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span>Cupons</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
                   )}
 
                   <DropdownMenuItem
