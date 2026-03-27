@@ -8,6 +8,7 @@ import { createRoute } from "@/lib/handler/route-handler";
 import { Pagarme } from "@/lib/pagarme";
 import prisma from "@/lib/prisma";
 import { createCustomerPanelAndNotify } from "@/modules/occasions/occasion.service";
+import { finishOrder } from "@/modules/orders/order.service";
 import createHttpError from "http-errors";
 import z from "zod";
 
@@ -86,6 +87,8 @@ export const POST = createRoute(
 
       createCustomerPanelAndNotify(payment.order.contact.phone)
         .catch((e) => console.error("[Ocasiões] Erro ao criar painel:", e));
+
+      finishOrder(payment.orderId).catch(() => {});
 
       return "Pagamento finalizado com sucesso!";
     } catch (error: any) {

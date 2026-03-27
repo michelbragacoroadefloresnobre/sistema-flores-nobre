@@ -247,7 +247,11 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
         source: LeadSource.SITE,
         status: LeadStatus.CONVERTED,
       },
-      update: { status: LeadStatus.CONVERTED },
+      update: {
+        name: contact.name,
+        email: contact.email,
+        status: LeadStatus.CONVERTED,
+      },
     });
 
     // ----- Form -------------------------------------------------------------

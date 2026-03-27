@@ -2,6 +2,7 @@ import { PaymentStatus } from "@/generated/prisma/enums";
 import { createRoute } from "@/lib/handler/route-handler";
 import prisma from "@/lib/prisma";
 import { createCustomerPanelAndNotify } from "@/modules/occasions/occasion.service";
+import { finishOrder } from "@/modules/orders/order.service";
 
 export const POST = createRoute(async (req, { params }) => {
   const { id } = params;
@@ -14,6 +15,8 @@ export const POST = createRoute(async (req, { params }) => {
 
   createCustomerPanelAndNotify(payment.order.contact.phone)
     .catch((e) => console.error("[Ocasiões] Erro ao criar painel:", e));
+
+  finishOrder(payment.orderId).catch(() => {});
 
   return "Pagamento confirmado com sucesso";
 });

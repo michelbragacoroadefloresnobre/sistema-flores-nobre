@@ -78,7 +78,7 @@ export const editOrderSchema = z.object({
   customerCity: z.string().min(1),
   customerUf: z.enum(UF),
 
-  productVariants: z.array(editOrderItemSchema),
+  productVariants: z.array(editOrderItemSchema).min(1, "Selecione pelo menos um produto"),
 });
 
 export type EditOrderData = z.infer<typeof editOrderSchema>;
