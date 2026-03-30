@@ -3,6 +3,27 @@ import { env } from "./env";
 import sharp from "sharp";
 import createHttpError from "http-errors";
 
+function formatQuotedBold(text: string): string {
+  return text
+    .split("\n")
+    .map((line) => (line.trim() ? `> *${line}*` : `>`))
+    .join("\n");
+}
+
+function formatQuoted(text: string): string {
+  return text
+    .split("\n")
+    .map((line) => (line.trim() ? `> ${line}` : `>`))
+    .join("\n");
+}
+
+function formatBold(text: string): string {
+  return text
+    .split("\n")
+    .map((line) => (line.trim() ? `*${line}*` : ""))
+    .join("\n");
+}
+
 export interface iChat {
   pinned: string;
   messagesUnread: string;
@@ -168,8 +189,8 @@ export const buildRequestMessage = (data: {
   let message = `
 📦 NOVO PEDIDO - *#NOBRE${data.orderId}*
 
-📍 Local da Entrega: 
-*${data.deliveryLocal.trim()}*
+📍 Local da Entrega:
+${data.deliveryLocal}
 
 ⏰ Horário da Entrega:
 *${data.time}*
@@ -178,7 +199,7 @@ export const buildRequestMessage = (data: {
   if (data.supplierNote)
     message += `
 📌 Observações:
-*${data.supplierNote}*
+${formatBold(data.supplierNote)}
 `;
   return message;
 };
@@ -197,14 +218,14 @@ export const buildConfirmationMessage = (data: {
   let message = `
 PEDIDO 📦 *#NOBRE${data.orderId}*
 
-🙇🏻‍♂️ Nome da Pessoa Homenageada: 
-> *${data.honoreeName}*
+🙇🏻‍♂️ Nome da Pessoa Homenageada:
+${formatQuotedBold(data.honoreeName)}
 
-📍 Local da Entrega: 
-> ${data.deliveryLocal.trim()}
+📍 Local da Entrega:
+${data.deliveryLocal}
 
 ⏰ Horário:
-> *${data.time}*
+${formatQuotedBold(data.time)}
 
 🌹 Produtos:
 `;
@@ -219,19 +240,19 @@ data.productList.forEach(p => {
   if (data.supplierNote)
     message += `
 📌 Observações:
-> *${data.supplierNote}*
+${formatQuotedBold(data.supplierNote)}
 `;
 
   if (data.honoreeName)
     message += `
-🎁 Nome do Remetente: 
-> *${data.senderName}*
+🎁 Nome do Remetente:
+${formatQuotedBold(data.senderName)}
 
-🙇🏻‍♂️ Nome da Pessoa Homenageada: 
-> *${data.honoreeName}*
+🙇🏻‍♂️ Nome da Pessoa Homenageada:
+${formatQuotedBold(data.honoreeName)}
 
-✉️ Frase de Homenagem: 
-> *${data.tributeCardPhrase}*
+✉️ Frase de Homenagem:
+${formatQuotedBold(data.tributeCardPhrase)}
 `;
 
   message += `
