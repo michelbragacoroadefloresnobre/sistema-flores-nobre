@@ -510,6 +510,13 @@ enum Channel {
   COROAS_NOBRE
 }
 
+enum InviteStatus {
+  PENDING
+  SENT
+  ACCEPTED
+  DECLINED
+}
+
 enum OccasionType {
   BIRTHDAY
   WEDDING_ANNIVERSARY
@@ -522,10 +529,12 @@ enum OccasionType {
 }
 
 model CustomerPanel {
-  id        String     @id @default(cuid())
-  phone     String     @unique @db.VarChar(15)
-  occasions Occasion[]
-  createdAt DateTime   @default(now())
+  id               String       @id @default(cuid())
+  phone            String       @unique @db.VarChar(15)
+  inviteStatus     InviteStatus @default(PENDING)
+  consentMessageId String?
+  occasions        Occasion[]
+  createdAt        DateTime     @default(now())
 
   @@map("customer_panel")
 }

@@ -14,14 +14,10 @@ const occasionTypeLabels: Record<OccasionType, string> = {
 
 export function buildPanelInviteMessage(panelUrl: string) {
   return (
-    `🌸 Obrigado por escolher a Flores Nobre!\n\n` +
-    `Cadastre as datas mais importantes da sua vida e receba lembretes antes de cada ocasião.\n` +
-    `👉 Cadastre agora: ${panelUrl}\n\n` +
-    `Benefícios diretos:\n` +
-    `• Avisos antes das datas\n` +
-    `• Ofertas exclusivas\n` +
-    `• Facilidade para presentear sem correria\n\n` +
-    `Mais momentos especiais para quem você ama 💐`
+    `Perfeito! Para continuar cuidando dessas datas especiais, cadastre as datas importantes da sua vida no nosso portal. Assim, você se antecipa a cada momento e recebe descontos exclusivos para essas datas pensadas em cada ocasião.\n\n` +
+    `👉 Acesse e cadastre em poucos segundos:\n` +
+    `${panelUrl}\n\n` +
+    `Conte com a Flores Nobre para estar presente nos seus melhores momentos. 💐`
   );
 }
 

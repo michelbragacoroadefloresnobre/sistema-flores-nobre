@@ -1,44 +1,91 @@
 ---
 name: ocasioes
-description: Contexto completo do sistema de ocasiões — modelo desacoplado por telefone, painel público do cliente, lembrete diário, resolução de nome via Contact/Lead, e integração com cupons. Use quando precisar entender, modificar ou integrar ocasiões no sistema.
+description: Contexto completo do sistema de ocasioes - fluxo de convite em 2 etapas (consentimento via WhatsApp template + link do painel), modelo desacoplado por telefone, painel publico do cliente, lembrete diario, e integracao com cupons. Use quando precisar entender, modificar ou integrar ocasioes no sistema.
 disable-model-invocation: false
 user-invocable: true
 argument-hint: [contexto]
 allowed-tools: Read, Grep, Glob, Bash
 ---
 
-# Sistema de Ocasiões
+# Sistema de Ocasioes
 
-O sistema de ocasiões permite que clientes cadastrem datas especiais (aniversários, datas comemorativas, etc.) para receber lembretes via WhatsApp com cupons de desconto. O **telefone é a chave de ligação** — o CustomerPanel é desacoplado do Contact e usa `phone` como identificador único.
+O sistema de ocasioes permite que clientes cadastrem datas especiais (aniversarios, datas comemorativas, etc.) para receber lembretes via WhatsApp com cupons de desconto. O **telefone e a chave de ligacao** — o CustomerPanel e desacoplado do Contact e usa `phone` como identificador unico.
 
 ---
 
-## Arquitetura
+## Arquitetura — Fluxo de Convite em 2 Etapas
 
 ```
-Pagamento confirmado
-        │
-        ▼
+Pedido entregue (DELIVERING_DELIVERED)
+        |
+        v
 createCustomerPanelAndNotify(phone)
-        │
-        ├── upsert CustomerPanel por phone
-        └── envia WhatsApp com link do painel
-                    │
-                    ▼
-        /ocasioes/[panelId]  (público)
-        Cliente cadastra ocasiões
-                    │
-                    ▼
-        Job diário (N8N cron 09:00 BRT)
+        |
+        +-- upsert CustomerPanel por phone
+        +-- envia WhatsApp template de consentimento (quick reply: "Sim"/"Nao")
+        +-- salva consentMessageId (ID da mensagem enviada)
+                    |
+                    v
+        Webhook Helena: MESSAGE_RECEIVED
+        POST /api/webhooks/helena/occasion-consent
+                    |
+                    +-- refId = consentMessageId? (vincula resposta ao painel)
+                    +-- "Sim" -> ACCEPTED -> envia link do painel
+                    +-- "Nao" -> DECLINED -> nada mais acontece
+                    |
+                    v
+        /ocasioes/[panelId]  (publico)
+        Cliente cadastra ocasioes
+                    |
+                    v
+        Job diario (N8N cron 09:00 BRT)
         POST /api/webhooks/occasions/daily-reminder
-                    │
-                    ├── resolve nome via resolveNameByPhone(phone)
-                    ├── busca contactId por phone (para cupom WooCommerce)
-                    ├── gera cupom R$20 via coupon.service
-                    └── envia WhatsApp com lembrete + cupom
+                    |
+                    +-- resolve nome via resolveNameByPhone(phone)
+                    +-- busca contactId por phone (para cupom WooCommerce)
+                    +-- gera cupom R$20 via coupon.service
+                    +-- envia WhatsApp com lembrete + cupom
 ```
 
-**Princípio: desacoplado do Contact.** O CustomerPanel usa `phone` (unique) como chave. O nome do cliente é resolvido em runtime via `resolveNameByPhone()`, que busca primeiro em Contact, depois em Lead, com fallback "Cliente".
+**Principio: desacoplado do Contact.** O CustomerPanel usa `phone` (unique) como chave. O nome do cliente e resolvido em runtime via `resolveNameByPhone()`, que busca primeiro em Contact, depois em Lead, com fallback "Cliente".
+
+---
+
+## Ponto de Disparo
+
+O convite e disparado quando o pedido e marcado como entregue (`DELIVERING_DELIVERED`), em um unico ponto:
+
+- `src/app/api/supplier-panel/[id]/confirm-delivery/route.tsx`
+
+Chamada fire-and-forget:
+```typescript
+createCustomerPanelAndNotify(order.contact.phone)
+  .catch((e) => console.error("[Ocasioes] Erro ao criar painel:", e));
+```
+
+---
+
+## Fluxo de Consentimento
+
+### Envio do Template
+
+Usa `sendOccasionConsentTemplate(phone)` em `src/lib/helena/index.ts` — funcao dedicada que envia template WhatsApp via `/message/send-sync` (sincrono, retorna `id` da mensagem).
+
+O template e criado externamente no Meta/Helena com 2 botoes quick reply: "Sim" e "Nao". O ID do template vem da env var `HELENA_OCCASION_CONSENT_TEMPLATE_ID`.
+
+### Recepcao da Resposta
+
+Webhook em `src/app/api/webhooks/helena/occasion-consent/route.ts` recebe eventos `MESSAGE_RECEIVED` da Helena:
+
+1. Verificar `eventType === "MESSAGE_RECEIVED"` e `direction === "FROM_HUB"`
+2. Buscar `CustomerPanel` onde `consentMessageId === refId` e `inviteStatus === SENT`
+3. Normalizar texto e verificar se e "sim" ou "nao"/"nao"
+4. Chamar `handleOccasionConsentResponse(panelId, accepted)`
+
+### Aceitacao/Recusa
+
+- **Aceito**: `inviteStatus` -> `ACCEPTED`, envia mensagem com link do painel via `buildPanelInviteMessage`
+- **Recusado**: `inviteStatus` -> `DECLINED`, nada mais acontece
 
 ---
 
@@ -48,41 +95,35 @@ createCustomerPanelAndNotify(phone)
 
 ### CustomerPanel
 
-Painel público do cliente. Um por telefone. O `id` (CUID) é usado na URL.
+Painel publico do cliente. Um por telefone. O `id` (CUID) e usado na URL.
 
 ```prisma
 model CustomerPanel {
-  id        String     @id @default(cuid())
-  phone     String     @unique @db.VarChar(15)
-  occasions Occasion[]
-  createdAt DateTime   @default(now())
+  id               String       @id @default(cuid())
+  phone            String       @unique @db.VarChar(15)
+  inviteStatus     InviteStatus @default(PENDING)
+  consentMessageId String?
+  occasions        Occasion[]
+  createdAt        DateTime     @default(now())
 
   @@map("customer_panel")
 }
 ```
 
-**Sem FK para Contact** — ligação é conceitual via phone (mesmo padrão do Lead).
+**Campos importantes:**
+- `inviteStatus`: controla o ciclo de vida do convite (`PENDING` -> `SENT` -> `ACCEPTED`/`DECLINED`)
+- `consentMessageId`: ID da mensagem de template enviada, usado para vincular resposta via `refId` no webhook
+
+**Sem FK para Contact** — ligacao e conceitual via phone (mesmo padrao do Lead).
 
 ### Occasion
 
-Ocasião cadastrada pelo cliente.
+Ocasiao cadastrada pelo cliente (sem alteracoes).
 
-```prisma
-model Occasion {
-  id              String        @id @default(cuid())
-  customerPanelId String
-  customerPanel   CustomerPanel @relation(fields: [customerPanelId], references: [id], onDelete: Cascade)
-  type            OccasionType
-  customName      String?       // Quando type = OTHER
-  personName      String        // Nome do homenageado
-  date            DateTime      // Data da ocasião
-  advanceDays     Int           // Dias de antecedência para notificar
-  lastNotifiedAt  DateTime?     // Controle de notificação anual
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+### Enum InviteStatus
 
-  @@map("occasion")
-}
+```
+PENDING, SENT, ACCEPTED, DECLINED
 ```
 
 ### Enum OccasionType
@@ -92,19 +133,24 @@ BIRTHDAY, WEDDING_ANNIVERSARY, MOTHERS_DAY, FATHERS_DAY,
 VALENTINES_DAY, GRADUATION, MEMORIAL, OTHER
 ```
 
-Labels em pt-BR:
-- BIRTHDAY → "Aniversário"
-- WEDDING_ANNIVERSARY → "Bodas"
-- MOTHERS_DAY → "Dia das Mães"
-- FATHERS_DAY → "Dia dos Pais"
-- VALENTINES_DAY → "Dia dos Namorados"
-- GRADUATION → "Formatura"
-- MEMORIAL → "In Memoriam"
-- OTHER → "Outro" (campo `customName` habilitado)
+---
+
+## Service Layer
+
+**Arquivo:** `src/modules/occasions/occasion.service.ts`
+
+| Funcao | Descricao |
+|--------|-----------|
+| `createCustomerPanelAndNotify(phone)` | Upsert CustomerPanel + envia template de consentimento + salva `consentMessageId` |
+| `handleOccasionConsentResponse(panelId, accepted)` | Atualiza `inviteStatus` e envia link do painel se aceito |
+| `createCustomerPanel(phone)` | Upsert CustomerPanel e retorna URL do painel (uso manual) |
+| `createOccasion(data)` | Cria ocasiao vinculada a um CustomerPanel |
+| `updateOccasion(id, data)` | Atualiza campos de uma ocasiao |
+| `deleteOccasion(id)` | Remove uma ocasiao |
 
 ---
 
-## Resolução de Nome por Telefone
+## Resolucao de Nome por Telefone
 
 **Arquivo:** `src/modules/occasions/resolve-name.ts`
 
@@ -112,118 +158,7 @@ Labels em pt-BR:
 export async function resolveNameByPhone(phone: string): Promise<string>
 ```
 
-Ordem de busca:
-1. `Contact.findUnique({ where: { phone } })` → retorna `name`
-2. `Lead.findUnique({ where: { phone } })` → retorna `name`
-3. Fallback: `"Cliente"`
-
-Usado no painel público (saudação) e no lembrete diário (template WhatsApp).
-
----
-
-## Service Layer
-
-**Arquivo:** `src/modules/occasions/occasion.service.ts`
-
-| Função | Descrição |
-|--------|-----------|
-| `createCustomerPanelAndNotify(phone)` | Upsert CustomerPanel por phone + envia WhatsApp com link do painel |
-| `createOccasion(data)` | Cria ocasião vinculada a um CustomerPanel |
-| `updateOccasion(id, data)` | Atualiza campos de uma ocasião |
-| `deleteOccasion(id)` | Remove uma ocasião |
-
-### Criação do Painel
-
-`createCustomerPanelAndNotify` é chamado automaticamente quando um pagamento é confirmado (4 pontos de entrada):
-
-- `src/app/api/payments/[id]/confirm/route.ts`
-- `src/app/api/payments/[id]/auth-capture/route.ts`
-- `src/app/api/payments/[id]/proof-of-payment/route.ts`
-- `src/app/api/webhooks/pagarme/route.ts` (com setTimeout de 5s)
-
-Todas passam apenas `phone` — extraído de `payment.order.contact.phone` ou `order.contact.phone`.
-
----
-
-## API Endpoints
-
-### Ocasiões (público — sem autenticação)
-
-#### POST `/api/occasions`
-**Arquivo:** `src/app/api/occasions/route.ts`
-
-Cria uma nova ocasião. Valida que o `customerPanelId` existe.
-
-**Body (Zod: `createOccasionSchema`):**
-```json
-{
-  "customerPanelId": "cuid...",
-  "type": "BIRTHDAY",
-  "customName": "Dia especial",
-  "personName": "Maria",
-  "date": "2026-05-15",
-  "advanceDays": 7
-}
-```
-
-| Campo | Tipo | Obrigatório | Validação |
-|-------|------|-------------|-----------|
-| `customerPanelId` | string | sim | CUID2 |
-| `type` | OccasionType | sim | enum |
-| `customName` | string | não | min 1 char, apenas se type = OTHER |
-| `personName` | string | sim | min 1 char |
-| `date` | date | sim | coerced |
-| `advanceDays` | int | sim | 1-60 |
-
-#### PATCH `/api/occasions/{id}`
-**Arquivo:** `src/app/api/occasions/[id]/route.ts`
-
-Atualiza uma ocasião. Todos os campos são opcionais.
-
-#### DELETE `/api/occasions/{id}`
-**Arquivo:** `src/app/api/occasions/[id]/route.ts`
-
-Remove uma ocasião.
-
----
-
-## Lembrete Diário
-
-**Arquivo:** `src/app/api/webhooks/occasions/daily-reminder/route.ts`
-
-Job diário (N8N cron às 09:00 BRT, POST sem body):
-
-1. **SQL raw** busca ocasiões cujo lembrete deve ser enviado hoje:
-   - Calcula `MAKE_DATE(ano_atual, mês, dia) - advanceDays` = hoje
-   - Filtra: `lastNotifiedAt IS NULL` ou ano anterior ao atual
-2. Para cada ocasião:
-   - Resolve nome via `resolveNameByPhone(phone)` do CustomerPanel
-   - Busca `contactId` por phone (para email restriction do cupom WooCommerce)
-   - Gera cupom R$20 uso único, 30 dias de validade (código: `FLORES-{hex}`)
-   - Envia template WhatsApp via Helena com parâmetros do lembrete
-   - Atualiza `lastNotifiedAt`
-
----
-
-## Frontend — Painel Público
-
-**Rota:** `src/app/ocasioes/[id]/page.tsx`
-
-Server component público (sem autenticação), acessível pelo ID do CustomerPanel na URL.
-
-**Funcionalidades:**
-- Busca CustomerPanel por ID com occasions incluídas
-- Resolve nome do cliente via `resolveNameByPhone(panel.phone)`
-- Exibe saudação: "Olá, {firstName}! Cadastre suas datas especiais..."
-- Tela 404 se painel não encontrado
-
-**Componentes:** `src/app/ocasioes/[id]/_components/`
-
-| Componente | Descrição |
-|------------|-----------|
-| `occasion-list.tsx` | Client component — lista de cards com edit/delete |
-| `occasion-form.tsx` | Client component — dialog criar/editar (React Hook Form + Zod) |
-| `occasion-delete-button.tsx` | Client component — AlertDialog de exclusão |
+Ordem de busca: Contact -> Lead -> fallback "Cliente".
 
 ---
 
@@ -231,15 +166,30 @@ Server component público (sem autenticação), acessível pelo ID do CustomerPa
 
 **Arquivo:** `src/modules/occasions/message.templates.ts`
 
-| Função | Uso |
+| Funcao | Uso |
 |--------|-----|
-| `buildPanelInviteMessage(panelUrl)` | Convite WhatsApp após pagamento |
-| `buildOccasionReminderTemplateParams(data)` | Parâmetros do template Helena para lembrete diário |
+| `buildPanelInviteMessage(panelUrl)` | Mensagem com link do painel (enviada apos aceite do consentimento) |
+| `buildOccasionReminderTemplateParams(data)` | Parametros do template Helena para lembrete diario |
 
-Parâmetros do lembrete:
-```typescript
-{ nome, dias, tipo_ocasiao, nome_pessoa, data, cupom, desconto }
-```
+O template de consentimento (com botoes "Sim"/"Nao") e criado externamente no Meta/Helena — nao ha funcao de build no codigo.
+
+---
+
+## API Endpoints
+
+### Ocasioes CRUD (publico)
+
+- `POST /api/occasions` — Cria ocasiao (`src/app/api/occasions/route.ts`)
+- `PATCH /api/occasions/{id}` — Atualiza ocasiao (`src/app/api/occasions/[id]/route.ts`)
+- `DELETE /api/occasions/{id}` — Remove ocasiao (`src/app/api/occasions/[id]/route.ts`)
+
+### Webhook de Consentimento
+
+- `POST /api/webhooks/helena/occasion-consent` — Recebe resposta do cliente ao template de consentimento (`src/app/api/webhooks/helena/occasion-consent/route.ts`)
+
+### Lembrete Diario
+
+- `POST /api/webhooks/occasions/daily-reminder` — Job diario N8N (`src/app/api/webhooks/occasions/daily-reminder/route.ts`)
 
 ---
 
@@ -247,16 +197,20 @@ Parâmetros do lembrete:
 
 | Arquivo | Responsabilidade |
 |---------|-----------------|
-| `prisma/schema.prisma` | Models CustomerPanel, Occasion, enum OccasionType |
-| `src/modules/occasions/occasion.service.ts` | CRUD ocasiões + createCustomerPanelAndNotify |
+| `prisma/schema.prisma` | Models CustomerPanel, Occasion, enums InviteStatus, OccasionType |
+| `src/modules/occasions/occasion.service.ts` | CRUD + createCustomerPanelAndNotify + handleOccasionConsentResponse |
 | `src/modules/occasions/occasion.dto.ts` | Schemas Zod (createOccasionSchema, updateOccasionSchema) |
-| `src/modules/occasions/resolve-name.ts` | resolveNameByPhone — busca nome em Contact → Lead → fallback |
+| `src/modules/occasions/resolve-name.ts` | resolveNameByPhone |
 | `src/modules/occasions/message.templates.ts` | Templates WhatsApp (convite e lembrete) |
-| `src/modules/occasions/coupon.service.ts` | Geração de cupons (compartilhado com sistema de cupons) |
-| `src/app/api/occasions/route.ts` | POST criar ocasião (público) |
-| `src/app/api/occasions/[id]/route.ts` | PATCH + DELETE ocasião (público) |
-| `src/app/api/webhooks/occasions/daily-reminder/route.ts` | Job diário de lembretes |
-| `src/app/ocasioes/[id]/page.tsx` | Painel público do cliente |
+| `src/modules/occasions/coupon.service.ts` | Geracao de cupons |
+| `src/lib/helena/index.ts` | `sendOccasionConsentTemplate` — envia template de consentimento |
+| `src/lib/env.ts` | `HELENA_OCCASION_CONSENT_TEMPLATE_ID` — ID do template |
+| `src/app/api/occasions/route.ts` | POST criar ocasiao (publico) |
+| `src/app/api/occasions/[id]/route.ts` | PATCH + DELETE ocasiao (publico) |
+| `src/app/api/webhooks/helena/occasion-consent/route.ts` | Webhook de resposta ao consentimento |
+| `src/app/api/webhooks/occasions/daily-reminder/route.ts` | Job diario de lembretes |
+| `src/app/api/supplier-panel/[id]/confirm-delivery/route.tsx` | Ponto de disparo do convite (entrega confirmada) |
+| `src/app/ocasioes/[id]/page.tsx` | Painel publico do cliente |
 | `src/app/ocasioes/[id]/_components/` | Componentes do painel (list, form, delete) |
 
 ---
@@ -264,14 +218,20 @@ Parâmetros do lembrete:
 ## Regras Importantes
 
 ### Desacoplamento
-- CustomerPanel **não tem FK** para Contact — usa `phone` como chave unique
-- Nome é resolvido em runtime via `resolveNameByPhone()` (Contact → Lead → fallback)
-- Isso permite que leads (não-clientes) também acessem o painel se receberem o link
+- CustomerPanel **nao tem FK** para Contact — usa `phone` como chave unique
+- Nome e resolvido em runtime via `resolveNameByPhone()` (Contact -> Lead -> fallback)
 
-### Notificação anual
-- `lastNotifiedAt` controla envio: só notifica uma vez por ano por ocasião
-- O SQL compara `EXTRACT(YEAR FROM lastNotifiedAt) < EXTRACT(YEAR FROM NOW())`
+### Fluxo de Consentimento em 2 Etapas
+- Template WhatsApp com botoes quick reply ("Sim"/"Nao") — criado externamente no Meta/Helena
+- `consentMessageId` vincula a resposta do webhook a mensagem original via `refId`
+- Somente envia link do painel se o cliente aceitar
+
+### Guard de Reenvio
+- `inviteStatus !== PENDING` impede reenvio do convite para o mesmo telefone
+
+### Notificacao Anual
+- `lastNotifiedAt` controla envio: so notifica uma vez por ano por ocasiao
 
 ### Sempre usar enums
-- `OccasionType` deve ser importado de `@/generated/prisma/enums`
-- Nunca usar strings diretas como `"BIRTHDAY"` — usar `OccasionType.BIRTHDAY`
+- `InviteStatus`, `OccasionType` devem ser importados de `@/generated/prisma/enums`
+- Nunca usar strings diretas

@@ -7,7 +7,6 @@ import {
 import { sendMessage } from "@/lib/helena";
 import prisma from "@/lib/prisma";
 import { finishOrder } from "@/modules/orders/order.service";
-import { createCustomerPanelAndNotify } from "@/modules/occasions/occasion.service";
 import createHttpError, { isHttpError } from "http-errors";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -143,11 +142,6 @@ async function proccessPaidOrder(event: PagarmeOrder) {
     order.contact.phone,
     `*✅ Pagamento no valor de *R$ ${((charge.amount || 0) / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}* confirmado*\nMuito obrigado por comprar com a Flores Nobre!\n\nPedido: *#NOBRE${order.id}*`,
   );
-
-  setTimeout(() => {
-    createCustomerPanelAndNotify(order.contact.phone)
-      .catch((e) => console.error("[Ocasiões] Erro ao criar painel:", e));
-  }, 5000);
 
   if (order.orderStatus === OrderStatus.DELIVERING_DELIVERED)
     finishOrder(order.id);

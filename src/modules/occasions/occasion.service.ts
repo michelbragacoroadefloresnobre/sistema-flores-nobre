@@ -1,6 +1,6 @@
-import { OccasionType } from "@/generated/prisma/enums";
+import { InviteStatus, OccasionType } from "@/generated/prisma/enums";
 import { env } from "@/lib/env";
-import { sendMessage } from "@/lib/helena";
+import { sendMessage, sendOccasionConsentTemplate } from "@/lib/helena";
 import prisma from "@/lib/prisma";
 import { buildPanelInviteMessage } from "./message.templates";
 
@@ -11,10 +11,38 @@ export async function createCustomerPanelAndNotify(phone: string) {
     update: {},
   });
 
-  const panelUrl = `${env.NEXT_PUBLIC_WEBSITE_URL}/ocasioes/${panel.id}`;
-  const message = buildPanelInviteMessage(panelUrl);
+  if (panel.inviteStatus !== InviteStatus.PENDING) return;
 
-  await sendMessage(phone, message);
+  const response = await sendOccasionConsentTemplate(phone);
+
+  await prisma.customerPanel.update({
+    where: { id: panel.id },
+    data: {
+      inviteStatus: InviteStatus.SENT,
+      consentMessageId: response.id,
+    },
+  });
+}
+
+export async function handleOccasionConsentResponse(
+  panelId: string,
+  accepted: boolean,
+) {
+  const panel = await prisma.customerPanel.update({
+    where: { id: panelId },
+    data: {
+      inviteStatus: accepted
+        ? InviteStatus.ACCEPTED
+        : InviteStatus.DECLINED,
+    },
+  });
+
+  if (accepted) {
+    const panelUrl = `${env.NEXT_PUBLIC_WEBSITE_URL}/ocasioes/${panel.id}`;
+    const message = buildPanelInviteMessage(panelUrl);
+    const imageUrl = `${env.NEXT_PUBLIC_WEBSITE_URL}/promotional_images/promotional_code.png`;
+    await sendMessage(panel.phone, message, imageUrl);
+  }
 }
 
 export async function createCustomerPanel(phone: string) {
