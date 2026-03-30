@@ -143,7 +143,7 @@ async function handleApproveOrder(panelId: string, phone: string) {
       senderName: order.senderName,
       honoreeName: order.honoreeName,
       tributeCardPhrase: order.tributeCardPhrase || "",
-      deliveryLocal: `*${order.deliveryAddress}, ${order.deliveryAddressNumber} - ${order.deliveryNeighboorhood} - ${order.deliveryZipCode}.* ${order.deliveryAddressComplement ? `\n\nComplemento: *${order.deliveryAddressComplement}*` : ""} `,
+      deliveryLocal: `${order.deliveryAddress}, ${order.deliveryAddressNumber} - ${order.deliveryNeighboorhood} - ${order.deliveryZipCode}. ${order.deliveryAddressComplement ? `\n\nComplemento: ${order.deliveryAddressComplement}` : ""} `,
       time: timeFormatted,
       supplierNote: order.supplierNote,
       productList,
