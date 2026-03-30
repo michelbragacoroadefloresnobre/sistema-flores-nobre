@@ -1,14 +1,17 @@
 -- CreateEnum
-CREATE TYPE "OccasionType" AS ENUM ('BIRTHDAY', 'WEDDING_ANNIVERSARY', 'MOTHERS_DAY', 'FATHERS_DAY', 'VALENTINES_DAY', 'GRADUATION', 'MEMORIAL', 'OTHER');
+DO $$ BEGIN
+    CREATE TYPE "OccasionType" AS ENUM ('BIRTHDAY', 'WEDDING_ANNIVERSARY', 'MOTHERS_DAY', 'FATHERS_DAY', 'VALENTINES_DAY', 'GRADUATION', 'MEMORIAL', 'OTHER');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- DropIndex
-DROP INDEX "campaign_data_gclid_key";
+DROP INDEX IF EXISTS "campaign_data_gclid_key";
 
 -- DropIndex
-DROP INDEX "unique_confirmed_panel_per_order";
+DROP INDEX IF EXISTS "unique_confirmed_panel_per_order";
 
 -- DropIndex
-DROP INDEX "unique_waiting_panel_per_order";
+DROP INDEX IF EXISTS "unique_waiting_panel_per_order";
 
 -- CreateTable
 CREATE TABLE "customer_panel" (
