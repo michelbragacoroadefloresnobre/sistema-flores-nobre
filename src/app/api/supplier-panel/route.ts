@@ -101,10 +101,9 @@ export const POST = createRoute(
           freight: coverageArea.freight,
           cost: totalCost || undefined,
           supplierPanelPhotos: {
-            create: orderProducts.map((op) => ({
+            create: {
               status: SupplierPanelPhotoStatus.PENDING,
-              orderProductId: op.id,
-            })),
+            },
           },
         },
         include: {
