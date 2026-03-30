@@ -17,3 +17,5 @@ export const PAYMENT_TYPE = [
 export const PAYMENT_TYPE_MAP = Object.fromEntries(
       PAYMENT_TYPE.map((item) => [item.id, item.label]),
     ) as Record<PaymentType, string>;
+
+export const PROMOTIONAL_IMAGE_URL = ""; // TODO: definir URL da imagem promocional

@@ -101,12 +101,10 @@ export const POST = createRoute(
           freight: coverageArea.freight,
           cost: totalCost || undefined,
           supplierPanelPhotos: {
-            createMany: {
-              data: orderProducts.map((op) => ({
-                status: SupplierPanelPhotoStatus.PENDING,
-                orderProductId: op.id,
-              })),
-            },
+            create: orderProducts.map((op) => ({
+              status: SupplierPanelPhotoStatus.PENDING,
+              orderProductId: op.id,
+            })),
           },
         },
         include: {

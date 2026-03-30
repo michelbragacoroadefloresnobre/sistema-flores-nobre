@@ -2,39 +2,43 @@
 
 import { SupplierPanelPhotoStatus } from "@/generated/prisma/enums";
 import { ProductImageItem } from "./product-image-item";
+import { ReferencePhotosGrid } from "./reference-photos-grid";
 
-export interface ProductItem {
+export interface ReferencePhoto {
+  name: string;
+  imageUrl: string;
+}
+
+export interface PhotoItem {
   spPhotoId: string;
-  referenceUrl: string;
   imageUrl?: string | null;
   status: SupplierPanelPhotoStatus;
   rejectionReason?: string | null;
-  name?: string;
 }
 
 interface ImageSectionProps {
   supplierPanelId: string;
-  products: ProductItem[];
+  referencePhotos: ReferencePhoto[];
+  photo?: PhotoItem;
 }
 
-export function ImageSection({ supplierPanelId, products }: ImageSectionProps) {
-  if (!products || products.length === 0) {
-    return (
-      <div className="text-center text-muted-foreground py-8">
-        Nenhum produto encontrado para este painel.
-      </div>
-    );
-  }
-
+export function ImageSection({
+  supplierPanelId,
+  referencePhotos,
+  photo,
+}: ImageSectionProps) {
   return (
     <div className="w-full max-w-2xl mx-auto py-6 px-4 flex flex-col gap-12">
-      {products.map((product) => (
+      {referencePhotos.length > 0 && (
+        <ReferencePhotosGrid referencePhotos={referencePhotos} />
+      )}
+
+      {photo && (
         <ProductImageItem
-          key={product.spPhotoId}
-          product={product}
+          photo={photo}
           supplierPanelId={supplierPanelId}
         />
-      ))}
+      )}
     </div>
   );
 }

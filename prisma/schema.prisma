@@ -137,11 +137,12 @@ model SupplierPanelPhoto {
   status          SupplierPanelPhotoStatus
   supplierPanelId String
   supplierPanel   SupplierPanel            @relation(fields: [supplierPanelId], references: [id], onDelete: Cascade)
-  orderProductId  String
-  orderProduct    OrderProduct             @relation(fields: [orderProductId], references: [id], onDelete: Cascade)
+  orderProductId  String?
+  orderProduct    OrderProduct?            @relation(fields: [orderProductId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
+  @@index([supplierPanelId])
   @@index([orderProductId, supplierPanelId])
   @@map("supplier_panel_photo")
 }

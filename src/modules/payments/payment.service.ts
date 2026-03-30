@@ -17,7 +17,7 @@ import { deliveryPeriodMap, getVariantLabel, hasRoles } from "@/lib/utils";
 import { format } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import { Prisma } from "@/generated/prisma/browser";
-import { PAYMENT_TYPE_MAP } from "@/lib/constants";
+import { PAYMENT_TYPE_MAP, PROMOTIONAL_IMAGE_URL } from "@/lib/constants";
 import { authClient } from "@/lib/auth/client";
 
 export const shouldHandleInternally = (data: {
@@ -298,4 +298,12 @@ export async function refundPayment({ paymentId, reason, amountInCents }: Refund
   }
 
   return await prisma.payment.findUniqueOrThrow({ where: { id: paymentId } });
+}
+
+export async function sendPromotionalMessage(phone: string, orderId: string) {
+  if (!PROMOTIONAL_IMAGE_URL) return;
+
+  const message = `🎉 *Obrigado pela sua compra!*\n\nApresente essa imagem na sua próxima compra e ganhe um desconto especial!\n\nPedido: *#NOBRE${orderId}*`;
+
+  await sendMessage(phone, message, PROMOTIONAL_IMAGE_URL);
 }

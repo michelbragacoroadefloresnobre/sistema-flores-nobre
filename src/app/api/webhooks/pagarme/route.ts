@@ -7,6 +7,7 @@ import {
 import { sendMessage } from "@/lib/helena";
 import prisma from "@/lib/prisma";
 import { finishOrder } from "@/modules/orders/order.service";
+import { sendPromotionalMessage } from "@/modules/payments/payment.service";
 import createHttpError, { isHttpError } from "http-errors";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -142,6 +143,11 @@ async function proccessPaidOrder(event: PagarmeOrder) {
     order.contact.phone,
     `*✅ Pagamento no valor de *R$ ${((charge.amount || 0) / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}* confirmado*\nMuito obrigado por comprar com a Flores Nobre!\n\nPedido: *#NOBRE${order.id}*`,
   );
+
+  setTimeout(() => {
+    sendPromotionalMessage(order.contact.phone, order.id)
+      .catch((e) => console.error("[Promocional] Erro ao enviar:", e));
+  }, 5000);
 
   if (order.orderStatus === OrderStatus.DELIVERING_DELIVERED)
     finishOrder(order.id);

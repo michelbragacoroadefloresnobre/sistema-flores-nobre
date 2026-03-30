@@ -14,5 +14,7 @@ export const POST = createRoute(async (req, { params }) => {
 
   finishOrder(payment.orderId).catch(() => {});
 
+  finishOrder(payment.orderId).catch(() => {});
+
   return "Pagamento confirmado com sucesso";
 });

@@ -86,6 +86,8 @@ export const POST = createRoute(
 
       finishOrder(payment.orderId).catch(() => {});
 
+      finishOrder(payment.orderId).catch(() => {});
+
       return "Pagamento finalizado com sucesso!";
     } catch (error: any) {
       console.warn("Pagamento reprovado:", error);
