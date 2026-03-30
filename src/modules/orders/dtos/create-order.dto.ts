@@ -90,7 +90,7 @@ export const createOrderSchema = z.object({
   customerCity: z.string().min(1),
   customerUf: z.enum(UF),
 
-  productVariants: z.array(createOrderItemSchema),
+  productVariants: z.array(createOrderItemSchema).min(1, "Selecione pelo menos um produto"),
 });
 
 export type CreateOrderData = z.infer<typeof createOrderSchema>;

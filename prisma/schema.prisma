@@ -12,7 +12,7 @@ model Contact {
   legalName         String?
   ie                String?
   name              String     @db.VarChar(255)
-  phone             String     @db.VarChar(15)
+  phone             String     @unique @db.VarChar(15)
   email             String     @db.VarChar(255)
   personType        PersonType
   taxId             String
@@ -22,10 +22,11 @@ model Contact {
   addressComplement String
   neighboorhood     String
   ibge              String?
-  city              City?      @relation(fields: [ibge], references: [ibge])
+  city              City?          @relation(fields: [ibge], references: [ibge])
   orders            Order[]
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  coupons           Coupon[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 
   @@map("contact")
 }
@@ -507,4 +508,90 @@ enum WeekDay {
 enum Channel {
   FLORES_NOBRE
   COROAS_NOBRE
+}
+
+enum InviteStatus {
+  PENDING
+  SENT
+  ACCEPTED
+  DECLINED
+}
+
+enum OccasionType {
+  BIRTHDAY
+  WEDDING_ANNIVERSARY
+  MOTHERS_DAY
+  FATHERS_DAY
+  VALENTINES_DAY
+  GRADUATION
+  MEMORIAL
+  OTHER
+}
+
+model CustomerPanel {
+  id               String       @id @default(cuid())
+  phone            String       @unique @db.VarChar(15)
+  inviteStatus     InviteStatus @default(PENDING)
+  consentMessageId String?
+  occasions        Occasion[]
+  createdAt        DateTime     @default(now())
+
+  @@map("customer_panel")
+}
+
+model Occasion {
+  id              String        @id @default(cuid())
+  customerPanelId String
+  customerPanel   CustomerPanel @relation(fields: [customerPanelId], references: [id], onDelete: Cascade)
+  type            OccasionType
+  customName      String?
+  personName      String
+  date            DateTime
+  advanceDays     Int
+  lastNotifiedAt  DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("occasion")
+}
+
+model Coupon {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  discountValue Decimal  @db.Decimal(10, 2)
+  validUntil    DateTime
+  maxUses       Int      @default(1)
+  usedCount     Int      @default(0)
+  isActive      Boolean  @default(true)
+  woocommerceId Int?     @unique
+  contactId     String?
+  contact       Contact? @relation(fields: [contactId], references: [id])
+  createdAt     DateTime @default(now())
+
+  @@map("coupon")
+}
+
+enum LeadSource {
+  NONE
+  FORM
+  SITE
+  SISTEMA_COROAS
+}
+
+enum LeadStatus {
+  NOT_CONVERTED
+  CONVERTED
+}
+
+model Lead {
+  id        String     @id @default(cuid())
+  name      String     @db.VarChar(255)
+  phone     String     @unique @db.VarChar(15)
+  email     String?    @db.VarChar(255)
+  source    LeadSource @default(NONE)
+  status    LeadStatus @default(NOT_CONVERTED)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@map("lead")
 }

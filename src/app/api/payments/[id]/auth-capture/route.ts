@@ -7,6 +7,7 @@ import { CNPJ } from "@/lib/env";
 import { createRoute } from "@/lib/handler/route-handler";
 import { Pagarme } from "@/lib/pagarme";
 import prisma from "@/lib/prisma";
+import { finishOrder } from "@/modules/orders/order.service";
 import createHttpError from "http-errors";
 import z from "zod";
 
@@ -82,6 +83,8 @@ export const POST = createRoute(
           paidAt: new Date().toISOString(),
         },
       });
+
+      finishOrder(payment.orderId).catch(() => {});
 
       return "Pagamento finalizado com sucesso!";
     } catch (error: any) {

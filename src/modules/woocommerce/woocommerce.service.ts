@@ -4,6 +4,8 @@ import {
   DeliveryPeriod,
   FormStatus,
   FormType,
+  LeadSource,
+  LeadStatus,
   OrderStatus,
   PaymentStatus,
   PaymentType,
@@ -63,12 +65,18 @@ const metaDataItemSchema = z.object({
   value: z.any(),
 });
 
+const couponLineSchema = z.object({
+  code: z.string(),
+  discount: z.union([z.string(), z.number()]).transform(String),
+});
+
 export const wooOrderEventSchema = z.object({
   id: z.number().optional(),
   billing: billingSchema,
   shipping: shippingSchema,
   status: z.string(),
   line_items: z.array(lineItemSchema).min(1),
+  coupon_lines: z.array(couponLineSchema).default([]),
   meta_data: z.array(metaDataItemSchema).default([]),
   payment_method: z.string().default(""),
   date_paid: z.string().nullable().optional(),
@@ -193,13 +201,12 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
   );
 
   const order = await prisma.$transaction(async (tx) => {
-    const contactConditions: Prisma.ContactWhereInput[] = [];
-    if (email) contactConditions.push({ email });
-    if (phone) contactConditions.push({ phone });
-
-    let contact = contactConditions.length
-      ? await tx.contact.findFirst({ where: { OR: contactConditions } })
+    let contact = phone
+      ? await tx.contact.findUnique({ where: { phone } })
       : null;
+    if (!contact && email) {
+      contact = await tx.contact.findFirst({ where: { email } });
+    }
 
     const billingCity = await resolveCity(tx, billing.city, billing.state);
 
@@ -228,6 +235,24 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
           : contactData,
       });
     }
+
+    // ----- Lead --------------------------------------------------------------
+
+    await tx.lead.upsert({
+      where: { phone: contact.phone },
+      create: {
+        name: contact.name,
+        phone: contact.phone,
+        email: contact.email,
+        source: LeadSource.SITE,
+        status: LeadStatus.CONVERTED,
+      },
+      update: {
+        name: contact.name,
+        email: contact.email,
+        status: LeadStatus.CONVERTED,
+      },
+    });
 
     // ----- Form -------------------------------------------------------------
 
@@ -377,6 +402,26 @@ export async function handleWooOrderCreated(event: WooOrderEvent) {
         paidAt: paymentStatus === PaymentStatus.PAID ? new Date() : null,
       },
     });
+
+    for (const couponLine of event.coupon_lines) {
+      const localCoupon = await tx.coupon.findFirst({
+        where: {
+          code: { equals: couponLine.code, mode: "insensitive" },
+          isActive: true,
+        },
+      });
+
+      if (localCoupon && localCoupon.usedCount < localCoupon.maxUses) {
+        await tx.coupon.update({
+          where: { id: localCoupon.id },
+          data: { usedCount: { increment: 1 } },
+        });
+        console.log(
+          `[WooCommerce] Cupom ${couponLine.code} resgatado via pedido`,
+        );
+      }
+    }
+
     return order;
   });
 

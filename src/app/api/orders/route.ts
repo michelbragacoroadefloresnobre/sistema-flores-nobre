@@ -2,6 +2,7 @@ import {
   DeliveryPeriod,
   FormStatus,
   FormType,
+  LeadStatus,
   LogType,
   OrderStatus,
   PaymentType,
@@ -74,9 +75,8 @@ export const POST = createRoute(
       },
     });
 
-    let contact = await prisma.contact.findFirst({
+    let contact = await prisma.contact.findUnique({
       where: { phone: body.customerPhone },
-      orderBy: { createdAt: "desc" },
     });
 
     const { payment, order } = await prisma.$transaction(async (tx) => {
@@ -110,6 +110,21 @@ export const POST = createRoute(
         },
         orderBy: {
           createdAt: "desc",
+        },
+      });
+
+      await tx.lead.upsert({
+        where: { phone: contact.phone },
+        create: {
+          name: contact.name,
+          phone: contact.phone,
+          email: contact.email,
+          status: LeadStatus.CONVERTED,
+        },
+        update: {
+          name: contact.name,
+          email: contact.email,
+          status: LeadStatus.CONVERTED,
         },
       });
 

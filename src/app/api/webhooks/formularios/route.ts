@@ -1,4 +1,4 @@
-import { FormStatus, FormType } from "@/generated/prisma/enums";
+import { FormStatus, FormType, LeadSource } from "@/generated/prisma/enums";
 import prisma from "@/lib/prisma";
 import { validateEmail } from "@/lib/utils";
 import { sendInitialTemplate } from "@/modules/conversions/conversion.service";
@@ -93,6 +93,12 @@ export async function POST(request: Request) {
         status: FormStatus.NOT_CONVERTED,
         source: sourceData || campaignData?.utm_source || undefined,
       },
+    });
+
+    await prisma.lead.upsert({
+      where: { phone },
+      create: { name, phone, email, source: LeadSource.FORM },
+      update: { name, email },
     });
 
     if (campaignData?.gclid || campaignData?.gbraid || campaignData?.wbraid) {
