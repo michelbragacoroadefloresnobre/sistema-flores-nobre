@@ -4,62 +4,81 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Sistema Flores Nobre — internal management system for a flower delivery business (Flores Nobre / Coroas Nobre). Built with Next.js 16 (App Router), React 19, Prisma 7 (PostgreSQL via `pg` adapter), and better-auth for authentication. The UI uses shadcn/ui (new-york style) with Tailwind CSS v4.
-
-The application is in Brazilian Portuguese (pt-BR).
+Sistema Flores Nobre — internal management system for a Brazilian flower delivery business. Handles orders, payments, supplier fulfillment, lead management, and WooCommerce integration.
 
 ## Commands
 
-- `npm run dev` — start dev server
-- `npm run build` — production build
-- `npm run lint` — ESLint (flat config, `eslint.config.mjs`)
-- `npx prisma generate` — regenerate Prisma client (output: `src/generated/prisma`)
-- `npx prisma migrate dev` — run migrations in development
-- `npx prisma migrate deploy` — apply migrations in production
+```bash
+npm run dev          # Start dev server (localhost:3000)
+npm run build        # Production build
+npm run lint         # ESLint
+npx prisma migrate dev --name <description>   # Create & apply migration
+npx prisma generate  # Regenerate Prisma client (also runs on npm install)
+```
+
+No test suite is configured.
 
 ## Architecture
 
-### Route structure
+- **Next.js 16.1** with App Router, TypeScript 5
+- **Prisma** with PostgreSQL (via `@prisma/adapter-pg` for connection pooling)
+- **Better-Auth** for authentication (email/password, role-based: USER, ADMIN, OWNER, SUPPLIER)
+- **shadcn/ui** + Radix UI components, Tailwind CSS 4
+- **React Hook Form** + **Zod** for form/API validation
+- **Zustand** for client-side state (with localStorage persistence)
+- **TanStack Query** for client-side data fetching
 
-- `src/app/(app)/` — authenticated admin panel pages (dashboard, pedidos, configuracoes)
-- `src/app/painel/[id]` — supplier panel (external-facing)
-- `src/app/checkout/` — customer checkout flow
-- `src/app/api/` — API route handlers (REST-style)
+### Key directories
+
+- `src/app/(app)/` — Protected routes (auth required via layout)
+- `src/app/api/` — REST API routes
+- `src/app/api/webhooks/` — Incoming webhooks (Pagar.me, ZAPI, Helena, WooCommerce, etc.)
+- `src/modules/<domain>/` — Business logic: `*.service.ts`, `dtos/`, `constants.ts`
+- `src/lib/` — Shared utilities, external service clients, Prisma instance
+- `src/components/ui/` — Reusable shadcn components
+- `src/generated/prisma/` — Auto-generated Prisma types and enums
 
 ### API route pattern
 
-All API routes use `createRoute()` from `src/lib/handler/route-handler.ts`. This wrapper handles auth verification, Zod body/query validation, and standardized error responses (http-errors + ZodError). Mark routes as `{ public: true }` to skip auth.
+All API routes use the `createRoute` wrapper (`src/lib/handler/route-handler.ts`):
 
-### Modules (`src/modules/`)
+```typescript
+import { createRoute } from "@/lib/handler/route-handler";
 
-Business logic layer organized by domain: orders, payments, products, suppliers, form, cities, conversions, files, message, users, woocommerce. Each module contains services (`*.service.ts`) and DTOs (`*.dto.ts` with Zod schemas).
+export const POST = createRoute(
+  async (req, { body, auth, params, searchParams }) => {
+    // body is Zod-validated; auth has session/user (null if public)
+    return "Success";          // → { message: "Success", status: 201 }
+    return { data: {...} };    // → { message: "Operação realizada com sucesso", status: 200, data: {...} }
+  },
+  { body: zodSchema, public: true }  // public: true skips auth check
+);
+```
 
-### Key integrations
+- `HttpError` → proper status code; `ZodError` → 400 with field errors; unhandled → 500
+- POST returns 201, other methods return 200
+- Options: `body` (Zod schema), `searchParams` (Zod schema), `public` (boolean)
 
-- **Pagar.me** (`src/lib/pagarme/`) — payment gateway (PIX, boleto, credit card)
-- **Z-API** (`src/lib/zapi.ts`) — WhatsApp messaging
-- **Helena** (`src/lib/helena/`) — CRM/sales assistant
-- **AWS S3** (`src/lib/s3.ts`) — file uploads with presigned URLs
-- **Upstash Redis** (`src/lib/redis.ts`) — kanban cache
-- **WooCommerce** (`src/modules/woocommerce/`) — site order sync
-- **N8N** — workflow automation (webhook triggers)
+### External integrations
 
-### Database
-
-PostgreSQL with Prisma. The Prisma client is generated to `src/generated/prisma/` (do not edit). Singleton instance in `src/lib/prisma.ts` uses the `pg` adapter with connection pooling. Configuration in `prisma.config.ts` reads `DATABASE_URL` from env.
-
-### Auth
-
-Uses better-auth (`src/lib/auth/`). Roles: OWNER, ADMIN, SUPERVISOR, SELLER. Client hook in `src/hooks/useAuth.ts`.
+- **Pagar.me** (`src/lib/pagarme/`) — Payment gateway (boleto, PIX, credit card)
+- **ZAPI** (`src/lib/zapi.ts`) — WhatsApp messaging
+- **Helena** (`src/lib/helena.ts`) — SMS service
+- **AWS S3** (`src/lib/s3.ts`) — Image storage
+- **WooCommerce** (`src/lib/woocommerce/`, `src/modules/woocommerce/`) — Order/product sync
+- **Upstash Redis** (`src/lib/redis.ts`) — Kanban board cache
+- **N8N** — Automation webhooks
 
 ### Environment
 
-Env vars are validated at startup via `@t3-oss/env-nextjs` in `src/lib/env.ts`. The import is loaded in `next.config.ts` so missing vars fail the build early. Timezone constant: `SP_TIMEZONE = "America/Sao_Paulo"`.
+All env vars validated via `@t3-oss/env-nextjs` in `src/lib/env.ts`. All dates use **São Paulo timezone** (`America/Sao_Paulo`, exported as `SP_TIMEZONE` from `src/lib/env.ts`).
 
-### Path alias
+### Important conventions
 
-`@/*` maps to `./src/*`
-
-### UI components
-
-shadcn/ui components live in `src/components/ui/`. State management with Zustand, server state with TanStack React Query.
+- Enums are defined in Prisma schema, import from `@/generated/prisma/enums`
+- Currency helper: `formatBRL()` from `src/lib/utils.ts`
+- Phone/CNPJ/CPF formatting helpers also in `src/lib/utils.ts`
+- Auth in server components: `auth.api.getSession({ headers: await headers() })`
+- Auth client-side: `authClient` from `src/lib/auth/client`
+- Language: UI text and API messages are in **Brazilian Portuguese**
+- Always use ENUMS to assign values ​​when applicable: `const a = 'PAGO'` is incorrect; `const a = PaymentStatus.PAID` is correct.

@@ -109,9 +109,8 @@ export const PUT = createRoute(
         ibge: body.customerIbge,
       };
 
-      let contact = await tx.contact.findFirst({
+      let contact = await tx.contact.findUnique({
         where: { phone: body.customerPhone },
-        orderBy: { createdAt: "desc" },
       });
 
       if (!contact)

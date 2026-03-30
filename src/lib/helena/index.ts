@@ -166,6 +166,19 @@ export async function sendTemplate(data: {
   return fetchResponse.data;
 }
 
+export async function sendOccasionConsentTemplate(number: string) {
+  const { env } = await import("@/lib/env");
+  const fetchResponse = await chatApi.post("/message/send-sync", {
+    from: CHANNEL_PHONES.FLORES_NOBRE,
+    to: number,
+    body: {
+      templateId: env.HELENA_OCCASION_CONSENT_TEMPLATE_ID,
+    },
+    options: { hiddenSession: true },
+  });
+  return fetchResponse.data;
+}
+
 export async function sendMessage(
   number: string,
   message: string | null | undefined,

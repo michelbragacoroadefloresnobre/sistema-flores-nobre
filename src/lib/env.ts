@@ -15,9 +15,14 @@ export const env = createEnv({
     PAGARME_SECRET_KEY: z.string().min(1),
 
     HELENA_TOKEN: z.string().min(1),
+    HELENA_OCCASION_CONSENT_TEMPLATE_ID: z.string().min(1),
     ZAPI_CLIENT_TOKEN: z.string().min(1),
     ZAPI_INSTANCE: z.string().min(1),
     ZAPI_TOKEN: z.string().min(1),
+
+    WOOCOMMERCE_URL: z.url(),
+    WOOCOMMERCE_CONSUMER_KEY: z.string().min(1),
+    WOOCOMMERCE_CONSUMER_SECRET: z.string().min(1),
 
     N8N_URL: z.url(),
     DISABLE_SSL: z.string().optional(),

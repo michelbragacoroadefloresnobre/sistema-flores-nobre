@@ -25,18 +25,21 @@ export const POST = createRoute(
   async (req, { body }) => {
     const { supplierId, orderId } = body;
 
-    const orderProducts = await prisma.orderProduct.findMany({
-      where: {
-        orderId: orderId,
-      },
-      include: {
-        variant: {
-          include: { product: true },
+    const { supplierPanel, order, orderProducts } = await prisma.$transaction(async (tx) => {
+      const orderProducts = await tx.orderProduct.findMany({
+        where: {
+          orderId: orderId,
         },
-      },
-    });
+        include: {
+          variant: {
+            include: { product: true },
+          },
+        },
+      });
 
-    const { supplierPanel, order } = await prisma.$transaction(async (tx) => {
+      if (orderProducts.length === 0)
+        throw new createHttpError.BadRequest("Pedido não possui produtos");
+
       const orders = await tx.order.updateManyAndReturn({
         data: { orderStatus: OrderStatus.PENDING_WAITING },
         where: {
@@ -120,6 +123,7 @@ export const POST = createRoute(
       return {
         supplierPanel,
         order: orders[0],
+        orderProducts,
       };
     });
 

@@ -1,0 +1,5 @@
+-- AlterEnum: rename SITE_COROAS to SITE
+ALTER TYPE "LeadSource" RENAME VALUE 'SITE_COROAS' TO 'SITE';
+
+-- AlterEnum: add SISTEMA_COROAS
+ALTER TYPE "LeadSource" ADD VALUE 'SISTEMA_COROAS';

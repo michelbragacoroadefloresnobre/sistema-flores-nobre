@@ -1,7 +1,7 @@
 import { PaymentStatus } from "@/generated/prisma/enums";
 import { createRoute } from "@/lib/handler/route-handler";
 import prisma from "@/lib/prisma";
-import { sendPromotionalMessage } from "@/modules/payments/payment.service";
+import { finishOrder } from "@/modules/orders/order.service";
 
 export const POST = createRoute(async (req, { params }) => {
   const { id } = params;
@@ -12,8 +12,9 @@ export const POST = createRoute(async (req, { params }) => {
     include: { order: { include: { contact: true } } },
   });
 
-  sendPromotionalMessage(payment.order.contact.phone, payment.order.id)
-    .catch((e) => console.error("[Promocional] Erro ao enviar:", e));
+  finishOrder(payment.orderId).catch(() => {});
+
+  finishOrder(payment.orderId).catch(() => {});
 
   return "Pagamento confirmado com sucesso";
 });
