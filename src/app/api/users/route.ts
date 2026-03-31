@@ -18,7 +18,17 @@ export const GET = createRoute(
     };
   },
   {
-    searchParams: z.object({ roles: z.array(z.enum(Role)).optional() }),
+    searchParams: z.object({
+      roles: z.preprocess(
+        (val) =>
+          val === undefined
+            ? undefined
+            : Array.isArray(val)
+              ? val
+              : String(val).split(",").filter(Boolean),
+        z.array(z.enum(Role)).optional(),
+      ),
+    }),
   },
 );
 
