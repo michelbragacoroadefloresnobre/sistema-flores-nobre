@@ -347,7 +347,9 @@ const CompletedTable = ({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
+                          <Link href={`/dashboard/finalizados/${order.id}`}>
+                            <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
+                          </Link>
                           <Link href={`/pedidos/${order.id}`}>
                             <DropdownMenuItem>Editar Pedido</DropdownMenuItem>
                           </Link>

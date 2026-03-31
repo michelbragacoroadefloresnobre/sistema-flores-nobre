@@ -64,7 +64,7 @@ export default function CompletedOrdersPage() {
     queryFn: () =>
       axios
         .get("/api/users", {
-          params: { role: [Role.SELLER, Role.SUPERVISOR] },
+          params: { roles: [Role.SELLER, Role.SUPERVISOR].join(",") },
         })
         .then((res) => res.data.data),
   });
