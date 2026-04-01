@@ -39,8 +39,11 @@ export const PUT = createRoute(
 
     let deliveryUntil: DateTime;
 
-    if (body.deliveryPeriod === DeliveryPeriod.EXPRESS)
-      deliveryUntil = DateTime.fromJSDate(new Date(body.deliveryUntil!));
+    if (body.deliveryPeriod === DeliveryPeriod.EXPRESS) {
+      deliveryUntil = DateTime.fromISO(body.deliveryUntil!);
+      if (!deliveryUntil.isValid)
+        throw new createHttpError.BadRequest("Horário de entrega expressa inválido");
+    }
     else {
       const hour = periodHours[body.deliveryPeriod];
 
