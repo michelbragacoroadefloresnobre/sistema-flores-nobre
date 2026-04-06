@@ -4,9 +4,11 @@ import {
   SupplierPanelStatus,
 } from "@/generated/prisma/enums";
 import { env } from "@/lib/env";
+import { sendMessage, sendTemplate } from "@/lib/helena";
 import { createRoute } from "@/lib/handler/route-handler";
 import prisma from "@/lib/prisma";
 import { sendMessageToSupplier } from "@/lib/zapi";
+import { createCustomerPanelAndNotify } from "@/modules/occasions/occasion.service";
 import createHttpError from "http-errors";
 import z from "zod";
 
@@ -20,7 +22,7 @@ export const POST = createRoute(
 
     const { imageId, id } = params;
 
-    const { isStartDelivering } = await prisma.$transaction(async (tx) => {
+    const { isStartDelivering, photoUrl } = await prisma.$transaction(async (tx) => {
       const spPhoto = await tx.supplierPanelPhoto.update({
         data: {
           status: body.status,
@@ -58,7 +60,7 @@ export const POST = createRoute(
           },
         });
       }
-      return { isStartDelivering };
+      return { isStartDelivering, photoUrl: spPhoto.imageUrl };
     });
 
     const supplierPanel = await prisma.supplierPanel.findUniqueOrThrow({
@@ -66,7 +68,7 @@ export const POST = createRoute(
         id,
       },
       include: {
-        order: true,
+        order: { include: { contact: true } },
         supplier: true,
       },
     });
@@ -93,6 +95,21 @@ export const POST = createRoute(
         e.response?.data || e,
       );
       return "Foto aprovada com sucesso, mas houve um erro ao enviar notificação para o fornecedor";
+    }
+
+    if (isStartDelivering) {
+      sendTemplate({
+        number: supplierPanel.order.contact.phone,
+        templateId: env.HELENA_PEDIDO_CAMINHO_TEMPLATE_ID,
+        parameters: { pedido: `${supplierPanel.orderId}` },
+      })
+        .then(() => {
+          if (photoUrl) {
+            return sendMessage(supplierPanel.order.contact.phone, null, photoUrl);
+          }
+        })
+        .then(() => createCustomerPanelAndNotify(supplierPanel.order.contact.phone))
+        .catch((e) => console.error("[Entrega] Erro ao notificar cliente:", e));
     }
 
     return `Foto ${body.status === SupplierPanelPhotoStatus.APPROVED ? "aprovada" : "recusada"} com sucesso!`;

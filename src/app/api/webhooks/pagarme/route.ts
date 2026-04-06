@@ -4,10 +4,10 @@ import {
   PaymentStatus,
   PaymentType,
 } from "@/generated/prisma/client";
-import { sendMessage } from "@/lib/helena";
+import { sendTemplate } from "@/lib/helena";
+import { env } from "@/lib/env";
 import prisma from "@/lib/prisma";
 import { finishOrder } from "@/modules/orders/order.service";
-import { sendPromotionalMessage } from "@/modules/payments/payment.service";
 import createHttpError, { isHttpError } from "http-errors";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -139,15 +139,14 @@ async function proccessPaidOrder(event: PagarmeOrder) {
     },
   });
 
-  await sendMessage(
-    order.contact.phone,
-    `*✅ Pagamento no valor de *R$ ${((charge.amount || 0) / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}* confirmado*\nMuito obrigado por comprar com a Flores Nobre!\n\nPedido: *#NOBRE${order.id}*`,
-  );
-
-  setTimeout(() => {
-    sendPromotionalMessage(order.contact.phone, order.id)
-      .catch((e) => console.error("[Promocional] Erro ao enviar:", e));
-  }, 5000);
+  await sendTemplate({
+    number: order.contact.phone,
+    templateId: env.HELENA_PAGAMENTO_CONFIRMADO_TEMPLATE_ID,
+    parameters: {
+      valor: ((charge.amount || 0) / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
+      pedido: `${order.id}`,
+    },
+  });
 
   if (order.orderStatus === OrderStatus.DELIVERING_DELIVERED)
     finishOrder(order.id);

@@ -5,6 +5,7 @@ import { createCoupon } from "@/modules/occasions/coupon.service";
 import { resolveNameByPhone } from "@/modules/occasions/resolve-name";
 import { NextResponse } from "next/server";
 import { Prisma } from "@/generated/prisma/client";
+import { CouponDiscountType } from "@/generated/prisma/enums";
 import { randomBytes } from "crypto";
 
 type OccasionRow = {
@@ -59,7 +60,8 @@ export async function POST() {
 
       const coupon = await createCoupon({
         code,
-        discountValue: "20.00",
+        discountType: CouponDiscountType.PERCENT,
+        discountValue: "10",
         validUntil,
         maxUses: 1,
         isActive: true,
@@ -74,7 +76,7 @@ export async function POST() {
         date: occasion.date,
         advanceDays: occasion.advanceDays,
         couponCode: coupon.code,
-        discountValue: "20,00",
+        discountValue: "10%",
       });
 
       await sendTemplate({
