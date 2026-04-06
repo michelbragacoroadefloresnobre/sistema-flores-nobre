@@ -37,7 +37,7 @@ import { Switch } from "@/components/ui/switch";
 
 const formSchema = z.object({
   code: z.string().min(1, "Código é obrigatório"),
-  discountType: z.enum(["FIXED_CART", "PERCENT"]).default("FIXED_CART"),
+  discountType: z.enum(["FIXED_CART", "PERCENT"]),
   discountValue: z.string().min(1, "Valor é obrigatório"),
   validUntil: z.string().min(1, "Validade é obrigatória"),
   maxUses: z.number().int().min(1, "Mínimo 1 uso"),
