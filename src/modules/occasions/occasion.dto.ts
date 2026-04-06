@@ -1,4 +1,4 @@
-import { OccasionType } from "@/generated/prisma/enums";
+import { CouponDiscountType, OccasionType } from "@/generated/prisma/enums";
 import z from "zod";
 
 export const createOccasionSchema = z.object({
@@ -20,6 +20,7 @@ export const updateOccasionSchema = z.object({
 
 export const createCouponSchema = z.object({
   code: z.string().min(1),
+  discountType: z.nativeEnum(CouponDiscountType).default(CouponDiscountType.FIXED_CART),
   discountValue: z.string().min(1),
   validUntil: z.coerce.date(),
   maxUses: z.number().int().min(1).default(1),
@@ -29,6 +30,7 @@ export const createCouponSchema = z.object({
 
 export const updateCouponSchema = z.object({
   code: z.string().min(1).optional(),
+  discountType: z.nativeEnum(CouponDiscountType).optional(),
   discountValue: z.string().min(1).optional(),
   validUntil: z.coerce.date().optional(),
   maxUses: z.number().int().min(1).optional(),

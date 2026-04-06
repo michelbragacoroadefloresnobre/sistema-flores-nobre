@@ -5,6 +5,11 @@ import {
   deleteWooCoupon,
 } from "@/lib/woocommerce";
 import { Coupon } from "@/generated/prisma/client";
+import { CouponDiscountType } from "@/generated/prisma/enums";
+
+function toWooDiscountType(type: CouponDiscountType): "fixed_cart" | "percent" {
+  return type === CouponDiscountType.PERCENT ? "percent" : "fixed_cart";
+}
 
 async function syncCouponToWoo(coupon: Coupon) {
   const contact = coupon.contactId
@@ -16,7 +21,7 @@ async function syncCouponToWoo(coupon: Coupon) {
 
   const wooCoupon = await createWooCoupon({
     code: coupon.code,
-    discount_type: "fixed_cart",
+    discount_type: toWooDiscountType(coupon.discountType),
     amount: coupon.discountValue.toString(),
     date_expires: coupon.validUntil.toISOString(),
     usage_limit: coupon.maxUses,
@@ -32,6 +37,7 @@ async function syncCouponToWoo(coupon: Coupon) {
 
 export async function createCoupon(data: {
   code: string;
+  discountType?: CouponDiscountType;
   discountValue: string;
   validUntil: Date;
   maxUses?: number;
@@ -54,6 +60,7 @@ export async function updateCoupon(
   id: string,
   data: {
     code?: string;
+    discountType?: CouponDiscountType;
     discountValue?: string;
     validUntil?: Date;
     maxUses?: number;
@@ -66,6 +73,7 @@ export async function updateCoupon(
   if (coupon.woocommerceId) {
     updateWooCoupon(coupon.woocommerceId, {
       ...(data.code && { code: data.code }),
+      ...(data.discountType && { discount_type: toWooDiscountType(data.discountType) }),
       ...(data.discountValue && { amount: data.discountValue }),
       ...(data.validUntil && { date_expires: data.validUntil.toISOString() }),
       ...(data.maxUses !== undefined && { usage_limit: data.maxUses }),

@@ -20,6 +20,7 @@ import { CouponDialog } from "./_components/coupon-dialog";
 type Coupon = {
   id: string;
   code: string;
+  discountType: "FIXED_CART" | "PERCENT";
   discountValue: string;
   validUntil: string;
   maxUses: number;
@@ -106,10 +107,9 @@ export default function CuponsPage() {
                       {coupon.code}
                     </TableCell>
                     <TableCell>
-                      R${" "}
-                      {Number(coupon.discountValue).toLocaleString("pt-BR", {
-                        minimumFractionDigits: 2,
-                      })}
+                      {coupon.discountType === "PERCENT"
+                        ? `${Number(coupon.discountValue).toFixed(0)}%`
+                        : `R$ ${Number(coupon.discountValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
                     </TableCell>
                     <TableCell>
                       {format(new Date(coupon.validUntil), "dd/MM/yyyy")}
