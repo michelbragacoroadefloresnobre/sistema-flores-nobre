@@ -1,7 +1,7 @@
 import { OrderStatus, SupplierPanelStatus } from "@/generated/prisma/enums";
-import { SP_TIMEZONE } from "@/lib/env";
+import { env, SP_TIMEZONE } from "@/lib/env";
 import { createRoute } from "@/lib/handler/route-handler";
-import { sendMessage } from "@/lib/helena";
+import { sendTemplate } from "@/lib/helena";
 import prisma from "@/lib/prisma";
 import { finishOrder } from "@/modules/orders/order.service";
 import { isHttpError } from "http-errors";
@@ -49,12 +49,14 @@ export const POST = createRoute(
       else console.error("Erro ao finalizar pedido:", e);
     }
 
-    await sendMessage(
-      order.contact.phone,
-      `*🌸 Pedido entregue.*\nSeu pedido foi entregue com sucesso. Agradecemos a confiança.\n\n` +
-        `Entregue em:\n${DateTime.fromJSDate(new Date(body.deliveredAt), { zone: SP_TIMEZONE }).toFormat("dd/MM/yy 'às' HH:mm")}\n\n` +
-        `Pedido:\n #NOBRE${order.id}`,
-    );
+    await sendTemplate({
+      number: order.contact.phone,
+      templateId: env.HELENA_PEDIDO_ENTREGUE_TEMPLATE_ID,
+      parameters: {
+        pedido: `${order.id}`,
+        data_entrega: DateTime.fromJSDate(new Date(body.deliveredAt), { zone: SP_TIMEZONE }).toFormat("dd/MM/yy 'às' HH:mm"),
+      },
+    });
 
     return "Entrega confirmada com sucesso!";
   },

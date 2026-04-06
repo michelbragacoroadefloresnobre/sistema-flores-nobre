@@ -4,7 +4,7 @@ import {
   SupplierPanelStatus,
 } from "@/generated/prisma/enums";
 import { env } from "@/lib/env";
-import { sendMessage } from "@/lib/helena";
+import { sendMessage, sendTemplate } from "@/lib/helena";
 import { createRoute } from "@/lib/handler/route-handler";
 import prisma from "@/lib/prisma";
 import { sendMessageToSupplier } from "@/lib/zapi";
@@ -98,14 +98,18 @@ export const POST = createRoute(
     }
 
     if (isStartDelivering) {
-      sendMessage(
-        supplierPanel.order.contact.phone,
-        `🚚 *Pedido a caminho*\nSeu pedido já saiu para entrega e chegará em breve ao destino.\n\nPedido: #NOBRE${supplierPanel.orderId}`,
-        photoUrl ?? undefined,
-      ).catch((e) => console.error("[Entrega] Erro ao notificar cliente:", e));
-
-      createCustomerPanelAndNotify(supplierPanel.order.contact.phone)
-        .catch((e) => console.error("[Ocasiões] Erro ao criar painel:", e));
+      sendTemplate({
+        number: supplierPanel.order.contact.phone,
+        templateId: env.HELENA_PEDIDO_CAMINHO_TEMPLATE_ID,
+        parameters: { pedido: `${supplierPanel.orderId}` },
+      })
+        .then(() => {
+          if (photoUrl) {
+            return sendMessage(supplierPanel.order.contact.phone, null, photoUrl);
+          }
+        })
+        .then(() => createCustomerPanelAndNotify(supplierPanel.order.contact.phone))
+        .catch((e) => console.error("[Entrega] Erro ao notificar cliente:", e));
     }
 
     return `Foto ${body.status === SupplierPanelPhotoStatus.APPROVED ? "aprovada" : "recusada"} com sucesso!`;

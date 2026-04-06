@@ -8,7 +8,7 @@ import z from "zod";
 
 export const POST = createRoute(
   async (req, { body, params }) => {
-    const imageUrl = `https://${env.S3_BUCKET_NAME}.s3.${env.AWS_REGION}.amazonaws.com/${body.fileKey}`;
+    const imageUrl = `${env.AWS_S3_CLOUDFRONT_URL}/${body.fileKey}`;
     const fileUrlResponse = await fetch(imageUrl);
 
     const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
