@@ -35,7 +35,6 @@ const CreateOrder = ({ serverData, phone }: Props) => {
       // Detalhes
       deliveryPeriod: "" as any,
       deliveryDate: "",
-      deliveryExpressTime: "" as any,
       sellerId: sessionData?.user.id || "",
       contactOrigin: "" as any,
       paymentType: "" as any,
