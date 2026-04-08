@@ -8,6 +8,7 @@ import { ReactNode } from "react";
 import { CancelButton } from "./_components/cancel-button";
 import { CostSection } from "./_components/cost-section";
 import { DeliveredSection } from "./_components/delivered-section";
+import { DeliveryLabelButton } from "./_components/delivery-label-button";
 import { DeliveringSection } from "./_components/delivering-section";
 import { ImageSection } from "./_components/image-section";
 import { OrderInfoRow } from "./_components/order-info-row";
@@ -93,6 +94,8 @@ export default async function Page({
       supplierPanelPhotos: true,
       order: {
         include: {
+          city: true,
+          contact: { select: { phone: true } },
           orderProducts: {
             include: {
               variant: { include: { product: { select: { name: true } } } },
@@ -289,6 +292,9 @@ export default async function Page({
                 <TributeCardButton panelId={supplierPanel.id} />
               </div>
             )}
+            <div className="mt-4">
+              <DeliveryLabelButton panelId={supplierPanel.id} />
+            </div>
             {isCancelable && (
               <div className="mt-4">
                 <CancelButton panelId={supplierPanel.id} />
