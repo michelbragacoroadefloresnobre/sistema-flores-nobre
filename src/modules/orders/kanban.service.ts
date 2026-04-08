@@ -169,10 +169,12 @@ export const getDeliveringOrders = async (): Promise<
       supplierPanel: {
         id: supplierPanel.id,
         cost: (Number(supplierPanel.cost) || 0).toFixed(2) || null,
-        approvedPhotos: supplierPanel.supplierPanelPhotos.map((photo) => ({
-          id: photo.id,
-          imageUrl: photo.imageUrl,
-        })),
+        approvedPhotos: supplierPanel.supplierPanelPhotos
+          .filter((photo): photo is typeof photo & { imageUrl: string } => photo.imageUrl !== null)
+          .map((photo) => ({
+            id: photo.id,
+            imageUrl: photo.imageUrl,
+          })),
       },
       customerName: order.contact.name,
       customerPhone: order.contact.phone,
