@@ -1,8 +1,14 @@
 import {
+  ContactOrigin,
   DeliveryPeriod,
+  OrderStatus,
+  PaymentStatus,
+  PaymentType,
   ProductColor,
   ProductSize,
   Role,
+  SupplierPanelStatus,
+  SupplierPaymentStatus,
 } from "@/generated/prisma/enums";
 import {
   PRODUCT_COLOR_MAP,
@@ -240,6 +246,52 @@ export const deliveryPeriodMap: Record<DeliveryPeriod, string> = {
   AFTERNOON: "Tarde",
   BUSINESSHOURS: "Horário Comercial",
   EXPRESS: "Expressa",
+};
+
+export const contactOriginMap: Record<ContactOrigin, string> = {
+  WHATSAPP: "WhatsApp",
+  PHONE: "Telefone",
+  SITE: "Site",
+  NONE: "Nenhum",
+};
+
+export const orderStatusMap: Record<OrderStatus, string> = {
+  PENDING_PREPARATION: "Preparação Pendente",
+  PENDING_WAITING: "Aguardando",
+  PENDING_CANCELLED: "Pendente Cancelado",
+  PRODUCING: "Produzindo",
+  DELIVERING_ON_ROUTE: "Em Rota",
+  DELIVERING_DELIVERED: "Entregue",
+  FINALIZED: "Finalizado",
+  CANCELLED: "Cancelado",
+};
+
+export const paymentStatusMap: Record<PaymentStatus, string> = {
+  ACTIVE: "Pendente",
+  PAID: "Pago",
+  CANCELLED: "Cancelado",
+  PROCESSING: "Processando",
+  REFUNDED: "Estornado",
+};
+
+export const paymentTypeMap: Record<PaymentType, string> = {
+  PIX: "Pix",
+  PIX_CNPJ: "Pix CNPJ",
+  CARD_CREDIT: "Cartão de Crédito",
+  BOLETO: "Boleto",
+  MONEY: "Dinheiro",
+  PATNERSHIP: "Parceria",
+};
+
+export const supplierPanelStatusMap: Record<SupplierPanelStatus, string> = {
+  WAITING: "Aguardando",
+  CONFIRMED: "Confirmado",
+  CANCELLED: "Cancelado",
+};
+
+export const supplierPaymentStatusMap: Record<SupplierPaymentStatus, string> = {
+  WAITING: "Aguardando",
+  PAID: "Pago",
 };
 
 export function hasRoles(roles: Role[], role: Role | null | any) {

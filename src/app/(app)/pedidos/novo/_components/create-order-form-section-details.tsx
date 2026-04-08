@@ -26,10 +26,20 @@ import {
 import { CreateOrderData } from "@/modules/orders/dtos/create-order.dto";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { addDays, format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { ChevronRight } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
+
+function toDatetimeLocal(isoString: string): string {
+  if (!isoString) return "";
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function expressDeliveryTime(): string {
+  return new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString();
+}
 
 interface DetalhesSectionProps {
   form: UseFormReturn<CreateOrderData>;
@@ -42,17 +52,15 @@ export function CreateOrderFormSectionDetails({
 }: DetalhesSectionProps) {
   const isExpressDelivery =
     form.watch("deliveryPeriod") === DeliveryPeriod.EXPRESS;
-  const isBoleto = form.watch("paymentType") === PaymentType.BOLETO;
 
   const onComplete = async () => {
     const isValidated = await form.trigger([
       "deliveryPeriod",
       "deliveryDate",
-      "deliveryExpressTime",
+      "deliveryUntil",
       "sellerId",
       "contactOrigin",
       "paymentType",
-      "boletoDue",
       "paymentStatus",
       "isWaited",
       "internalNote",
@@ -97,10 +105,10 @@ export function CreateOrderFormSectionDetails({
                     field.onChange(v);
                     if (v === DeliveryPeriod.EXPRESS) {
                       form.unregister("deliveryDate");
-                      form.setValue("deliveryExpressTime", "" as any);
+                      form.setValue("deliveryUntil", expressDeliveryTime());
                     } else {
                       form.setValue("deliveryDate", "");
-                      form.unregister("deliveryExpressTime");
+                      form.unregister("deliveryUntil");
                     }
                   }}
                 >
@@ -129,24 +137,20 @@ export function CreateOrderFormSectionDetails({
           {isExpressDelivery ? (
             <FormField
               control={form.control}
-              name="deliveryExpressTime"
+              name="deliveryUntil"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Entregar em até <b className="text-red-600">*</b>
+                    Entrega Até <b className="text-red-600">*</b>
                   </FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl className="w-full">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um tempo máximo" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="PT1H">1 hora</SelectItem>
-                      <SelectItem value="PT2H">2 horas</SelectItem>
-                      <SelectItem value="PT3H">3 horas</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl className="w-full">
+                    <Input
+                      readOnly
+                      className="w-full cursor-default"
+                      type="datetime-local"
+                      value={toDatetimeLocal(field.value ?? "")}
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />
@@ -245,12 +249,7 @@ export function CreateOrderFormSectionDetails({
                 </FormLabel>
                 <Select
                   value={field.value}
-                  onValueChange={(v) => {
-                    field.onChange(v);
-                    if (v === PaymentType.BOLETO)
-                      form.setValue("boletoDue", "");
-                    else form.unregister("boletoDue");
-                  }}
+                  onValueChange={field.onChange}
                 >
                   <FormControl className="w-full">
                     <SelectTrigger>
@@ -258,7 +257,6 @@ export function CreateOrderFormSectionDetails({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value={PaymentType.BOLETO}>Boleto</SelectItem>
                     <SelectItem value={PaymentType.CARD_CREDIT}>
                       Cartão de Crédito
                     </SelectItem>
@@ -275,53 +273,6 @@ export function CreateOrderFormSectionDetails({
               </FormItem>
             )}
           />
-
-          {isBoleto && (
-            <FormField
-              control={form.control}
-              name="boletoDue"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Vencimento do Boleto <b className="text-red-600">*</b>
-                  </FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl className="w-full">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o vencimento" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value={"7"}>
-                        7 dias (
-                        {format(addDays(new Date(), 7), "dd/MM/yyyy", {
-                          locale: ptBR,
-                        })}
-                        )
-                      </SelectItem>
-                      <SelectItem value={"15"}>
-                        15 dias (
-                        {format(addDays(new Date(), 15), "dd/MM/yyyy", {
-                          locale: ptBR,
-                        })}
-                        )
-                      </SelectItem>
-                      <SelectItem value={"30"}>
-                        30 dias (
-                        {format(addDays(new Date(), 30), "dd/MM/yyyy", {
-                          locale: ptBR,
-                        })}
-                        )
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </FormItem>
-              )}
-            />
-          )}
 
           <FormField
             control={form.control}

@@ -34,7 +34,7 @@ export const POST = createRoute(
       return NextResponse.json({
         key: unicName,
         uploadUrl,
-        publicUrl: `https://${env.S3_BUCKET_NAME}.s3.${env.AWS_REGION}.amazonaws.com/${unicName}`,
+        publicUrl: `${env.AWS_S3_CLOUDFRONT_URL}/${unicName}`,
       });
     } catch (e) {
       console.error("Erro ao gerar url pre assinada:", e);

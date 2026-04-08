@@ -5,7 +5,8 @@ import { CNPJ, env } from "../env";
 import { CreatePagarmeOrderPayment, PagarmeOrderResponse } from "./types";
 
 async function getApi(cnpjType: CNPJ) {
-  let credentials;
+  try {
+    let credentials;
   switch (cnpjType) {
     case CNPJ.FN:
       credentials = Buffer.from(`${env.PAGARME_SECRET_KEY}:`).toString(
@@ -21,37 +22,53 @@ async function getApi(cnpjType: CNPJ) {
       Authorization: "Basic " + credentials,
     },
   });
+  } catch (error:any) {
+    console.error("Error creating Pagarme API client:", error);
+  }
+  
 }
 
 async function createOrder(
   cnpjType: CNPJ,
   orderData: CreatePagarmeOrderPayment,
 ) {
-  const response = await (await getApi(cnpjType)).post("/orders", orderData);
+  try {
+    const response = await (await getApi(cnpjType))?.post("/orders", orderData);
 
-  const data = response.data as PagarmeOrderResponse;
+    const data = response?.data as PagarmeOrderResponse;
 
-  const charges = data?.charges[0];
+    const charges = data?.charges[0];
 
-  console.log("Payment:", JSON.stringify(data, null, 2));
+    console.log("Payment:", JSON.stringify(data, null, 2));
 
-  const lastTransaction = charges?.last_transaction;
-  const gatewayError = lastTransaction.gateway_response.errors?.[0]?.message;
+    const lastTransaction = charges?.last_transaction;
+    const gatewayError = lastTransaction.gateway_response.errors?.[0]?.message;
 
-  if (lastTransaction?.gateway_response?.code === "400") {
-    if (gatewayError?.includes("CPF"))
-      throw new createHttpError.BadRequest("O CPF cadastrado é invalido");
-    else if (gatewayError?.includes("CNPJ"))
-      throw new createHttpError.BadRequest("O CNPJ cadastrado é invalido");
-    throw new createHttpError.BadRequest(
-      "Verifique os dados e tente novamente",
-    );
+    if (lastTransaction?.gateway_response?.code === "400") {
+      if (gatewayError?.includes("CPF"))
+        throw new createHttpError.BadRequest("O CPF cadastrado é invalido");
+      else if (gatewayError?.includes("CNPJ"))
+        throw new createHttpError.BadRequest("O CNPJ cadastrado é invalido");
+      throw new createHttpError.BadRequest(
+        "Verifique os dados e tente novamente",
+      );
+    }
+
+    if (!lastTransaction.success)
+      throw new createHttpError.BadRequest("Pagamento reprovado");
+
+    return data;
+  } catch (error: any) {
+    if (error.status || error.statusCode) throw error;
+
+    if (error.response) {
+      console.error("Pagarme error status:", error.response.status);
+      console.error("Pagarme error body:", JSON.stringify(error.response.data, null, 2));
+      throw new createHttpError.BadGateway("Erro ao processar pagamento no gateway");
+    }
+
+    throw error;
   }
-
-  if (!lastTransaction.success)
-    throw new createHttpError.BadRequest("Pagamento reprovado");
-
-  return data;
 }
 
 function buildOrderPayload(data: {
@@ -72,8 +89,7 @@ function buildOrderPayload(data: {
   };
   value: number;
   product: string;
-  paymentMethod: "pix" | "boleto" | "credit_card";
-  boletoDue?: Date;
+  paymentMethod: "pix" | "credit_card";
   card?: {
     cardNumber: string;
     cardName: string;
@@ -125,26 +141,6 @@ function buildOrderPayload(data: {
         expires_at: addDays(new Date(), 1).toISOString(),
       },
     });
-  } else if (data.paymentMethod === "boleto") {
-    basePayload.payments.push({
-      payment_method: "boleto",
-      boleto: {
-        bank: "237",
-        due_at: data.boletoDue,
-        document_number: data.id.slice(0, 16),
-        type: "DM",
-        interest: {
-          days: 1,
-          type: "percentage",
-          amount: 1,
-        },
-        fine: {
-          days: 1,
-          type: "percentage",
-          amount: 1,
-        },
-      },
-    });
   } else if (data.paymentMethod === "credit_card" && data.card) {
     const [month, year] = data.card.expiryDate.split("/");
     basePayload.payments.push({
@@ -173,7 +169,7 @@ async function refundPayment(externalId: string, amountInCents: number) {
 
   let response;
   try {
-    response = await api.delete(`/charges/${externalId}`, {
+    response = await api?.delete(`/charges/${externalId}`, {
       data: { amount: amountInCents },
     });
   } catch (error: any) {
@@ -216,11 +212,6 @@ function extractPaymentData(orderData: PagarmeOrderResponse): {
     paymentData = {
       text: lastTransaction.qr_code!,
       url: lastTransaction.qr_code_url!,
-    };
-  } else if (paymentMethod === "boleto") {
-    paymentData = {
-      text: undefined,
-      url: lastTransaction.pdf!,
     };
   }
 

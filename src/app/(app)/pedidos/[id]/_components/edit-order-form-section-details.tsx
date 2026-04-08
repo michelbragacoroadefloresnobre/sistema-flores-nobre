@@ -24,11 +24,22 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { ChevronRight } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import { DeliveryExpressTimeInput } from "./delivery-express-time-input";
 
 interface DetalhesSectionProps {
   form: UseFormReturn<EditOrderData>;
   onNext: () => void;
+}
+
+function toDatetimeLocal(isoString: string): string {
+  if (!isoString) return "";
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function expressDeliveryTime(): string {
+  return new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString();
 }
 
 export function EditOrderFormSectionDetails({
@@ -88,7 +99,7 @@ export function EditOrderFormSectionDetails({
                     field.onChange(v);
                     if (v === DeliveryPeriod.EXPRESS) {
                       form.unregister("deliveryDate");
-                      form.setValue("deliveryUntil", "");
+                      form.setValue("deliveryUntil", expressDeliveryTime());
                     } else {
                       form.setValue("deliveryDate", "");
                       form.unregister("deliveryUntil");
@@ -126,10 +137,14 @@ export function EditOrderFormSectionDetails({
                   <FormLabel>
                     Entrega Até <b className="text-red-600">*</b>
                   </FormLabel>
-                  <DeliveryExpressTimeInput
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
+                  <FormControl className="w-full">
+                    <Input
+                      readOnly
+                      className="w-full cursor-default"
+                      type="datetime-local"
+                      value={toDatetimeLocal(field.value ?? "")}
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />

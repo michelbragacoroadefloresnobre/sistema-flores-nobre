@@ -3,8 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Spinner } from "@/components/ui/spinner";
-import { OrderStatus, Prisma } from "@/generated/prisma/browser";
-import { deliveryPeriodMap, getVariantLabel } from "@/lib/utils";
+import { DeliveryPeriod, OrderStatus, Prisma } from "@/generated/prisma/browser";
+import { getVariantLabel } from "@/lib/utils";
 import { KANBAN_QUERY_KEY } from "@/modules/orders/constants";
 import {
   EditOrderData,
@@ -41,7 +41,7 @@ interface Props {
 }
 
 const EditOrderScreen = ({ order }: Props) => {
-  const isExpressDelivery = order.deliveryPeriod === deliveryPeriodMap.EXPRESS;
+  const isExpressDelivery = order.deliveryPeriod === DeliveryPeriod.EXPRESS;
 
   const form = useForm<EditOrderData>({
     resolver: zodResolver(editOrderSchema) as any,

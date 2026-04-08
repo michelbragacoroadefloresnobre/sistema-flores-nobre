@@ -26,10 +26,18 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 
 const formSchema = z.object({
   code: z.string().min(1, "Código é obrigatório"),
+  discountType: z.enum(["FIXED_CART", "PERCENT"]),
   discountValue: z.string().min(1, "Valor é obrigatório"),
   validUntil: z.string().min(1, "Validade é obrigatória"),
   maxUses: z.number().int().min(1, "Mínimo 1 uso"),
@@ -42,6 +50,7 @@ type FormData = z.infer<typeof formSchema>;
 type CouponProp = {
   id: string;
   code: string;
+  discountType: "FIXED_CART" | "PERCENT";
   discountValue: string;
   validUntil: string;
   maxUses: number;
@@ -58,6 +67,7 @@ export function CouponDialog({ coupon }: { coupon?: CouponProp }) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       code: "",
+      discountType: "FIXED_CART",
       discountValue: "",
       validUntil: "",
       maxUses: 1,
@@ -66,10 +76,13 @@ export function CouponDialog({ coupon }: { coupon?: CouponProp }) {
     },
   });
 
+  const discountType = form.watch("discountType");
+
   useEffect(() => {
     if (open && coupon) {
       form.reset({
         code: coupon.code,
+        discountType: coupon.discountType ?? "FIXED_CART",
         discountValue: String(coupon.discountValue),
         validUntil: new Date(coupon.validUntil).toISOString().split("T")[0],
         maxUses: coupon.maxUses,
@@ -79,6 +92,7 @@ export function CouponDialog({ coupon }: { coupon?: CouponProp }) {
     } else if (open) {
       form.reset({
         code: "",
+        discountType: "FIXED_CART",
         discountValue: "",
         validUntil: "",
         maxUses: 1,
@@ -92,6 +106,7 @@ export function CouponDialog({ coupon }: { coupon?: CouponProp }) {
     mutationFn: async (values: FormData) => {
       const payload = {
         code: values.code,
+        discountType: values.discountType,
         discountValue: values.discountValue,
         validUntil: new Date(values.validUntil).toISOString(),
         maxUses: values.maxUses,
@@ -163,25 +178,52 @@ export function CouponDialog({ coupon }: { coupon?: CouponProp }) {
 
               <FormField
                 control={form.control}
-                name="discountValue"
+                name="discountType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Valor (R$)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="10.00"
-                        {...field}
-                      />
-                    </FormControl>
+                    <FormLabel>Tipo de desconto</FormLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="FIXED_CART">Valor fixo (R$)</SelectItem>
+                        <SelectItem value="PERCENT">Porcentagem (%)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </FormItem>
                 )}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="discountValue"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {discountType === "PERCENT" ? "Desconto (%)" : "Valor (R$)"}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step={discountType === "PERCENT" ? "1" : "0.01"}
+                        min="0"
+                        max={discountType === "PERCENT" ? "100" : undefined}
+                        placeholder={discountType === "PERCENT" ? "10" : "10.00"}
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="validUntil"
@@ -194,25 +236,25 @@ export function CouponDialog({ coupon }: { coupon?: CouponProp }) {
                   </FormItem>
                 )}
               />
-
-              <FormField
-                control={form.control}
-                name="maxUses"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Máximo de usos</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="1"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
             </div>
+
+            <FormField
+              control={form.control}
+              name="maxUses"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Máximo de usos</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="1"
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}

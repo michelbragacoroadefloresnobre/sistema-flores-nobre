@@ -16,6 +16,7 @@ export type CreateWooCouponInput = z.infer<typeof createWooCouponSchema>;
 
 export const updateWooCouponSchema = z.object({
   code: z.string().optional(),
+  discount_type: z.enum(["fixed_cart", "percent", "fixed_product"]).optional(),
   amount: z.string().optional(),
   date_expires: z.string().nullable().optional(),
   usage_limit: z.number().nullable().optional(),

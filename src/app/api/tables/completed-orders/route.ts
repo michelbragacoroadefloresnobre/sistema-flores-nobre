@@ -1,4 +1,5 @@
 import { Prisma } from "@/generated/prisma/client";
+import { SupplierPanelStatus } from "@/generated/prisma/enums";
 import { createRoute } from "@/lib/handler/route-handler";
 import prisma from "@/lib/prisma";
 import { completedFilterOptionsSchema } from "@/modules/orders/dtos/completed-order-table.dto";
@@ -153,6 +154,7 @@ export const GET = createRoute(
         user: { select: { id: true, name: true } },
         payments: { select: { amount: true, status: true, paidAt: true } },
         supplierPanels: {
+          where: { status: SupplierPanelStatus.CONFIRMED },
           select: {
             cost: true,
             freight: true,

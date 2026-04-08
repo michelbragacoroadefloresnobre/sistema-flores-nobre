@@ -17,7 +17,6 @@ type ProcessPaymentParams = {
     type: PaymentType;
     status: PaymentStatus;
     amount: string;
-    boletoDue?: string;
     orderId: string;
     productName: string;
   };
@@ -57,7 +56,7 @@ export async function createPayment({
     return { payment };
   }
 
-  if (body.type === PaymentType.BOLETO || body.type === PaymentType.PIX) {
+  if (body.type === PaymentType.PIX) {
     const customerName =
       customer.personType === PersonType.PJ
         ? customer.legalName!
@@ -79,13 +78,9 @@ export async function createPayment({
         city: city.name,
         state: city.uf,
       },
-      boletoDue:
-        body.type === PaymentType.BOLETO
-          ? new Date(body.boletoDue!)
-          : undefined,
       value: Number(body.amount),
       product: body.productName,
-      paymentMethod: body.type.toLowerCase() as any,
+      paymentMethod: "pix",
     });
 
     const orderPayment = await Pagarme.createOrder(CNPJ.FN, paymentPayload);
@@ -98,8 +93,6 @@ export async function createPayment({
         amount: body.amount,
         orderId: body.orderId,
         status: PaymentStatus.ACTIVE,
-        boletoDueAt:
-          body.type === PaymentType.BOLETO ? body.boletoDue : undefined,
         externalId: paymentData.id,
         url: paymentData.url,
         text: paymentData.text,

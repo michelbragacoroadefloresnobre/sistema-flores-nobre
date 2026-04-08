@@ -7,13 +7,16 @@ import { iOrderDelivering } from "@/modules/orders/dtos/kanban.dto";
 import { DollarSign, Edit, Edit3, ImageIcon, LinkIcon } from "lucide-react";
 import { DateTime } from "luxon";
 import { default as Link } from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { FaWhatsapp } from "react-icons/fa";
 import { toast } from "sonner";
 import { BadgeStatus } from "../badge-status";
 import { OrderDisplay } from "../kanban-card-footer";
+import { KanbanImageDialog } from "../kanban-image-dialog";
 
 export function KanbanCardDelivering({ order }: { order: iOrderDelivering }) {
+  const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
+
   const status: "normal" | "warning" | "late" = useMemo(() => {
     const diffMinutes = DateTime.fromISO(order.deliveryUntil).diffNow(
       "minutes",
@@ -142,10 +145,33 @@ export function KanbanCardDelivering({ order }: { order: iOrderDelivering }) {
               >
                 <FaWhatsapp className="size-3.5" />
               </Button>
+
+              {order.supplierPanel.approvedPhotos.length > 0 && (
+                <Button
+                  variant={"ghost"}
+                  className="size size-7 text-muted-foreground hover:text-foreground"
+                  size={"icon"}
+                  title="Ver fotos aprovadas"
+                  onClick={() => setPhotoDialogOpen(true)}
+                >
+                  <ImageIcon className="size-3.5" />
+                </Button>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {order.supplierPanel.approvedPhotos.length > 0 && (
+        <KanbanImageDialog
+          open={photoDialogOpen}
+          onOpenChange={setPhotoDialogOpen}
+          imageUrl={order.supplierPanel.approvedPhotos[0].imageUrl}
+          panelId={order.supplierPanel.id}
+          productName=""
+          showActionsButton={false}
+        />
+      )}
     </>
   );
 }

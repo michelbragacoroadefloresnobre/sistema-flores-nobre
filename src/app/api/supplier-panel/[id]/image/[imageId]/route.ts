@@ -11,7 +11,7 @@ import z from "zod";
 export const POST = createRoute(
   async (req, { params, body }) => {
     const fileUrlResponse = await fetch(
-      `https://${env.S3_BUCKET_NAME}.s3.${env.AWS_REGION}.amazonaws.com/${body.fileKey}`,
+      `${env.AWS_S3_CLOUDFRONT_URL}/${body.fileKey}`,
     );
 
     const allowedImageTypes = [
@@ -51,7 +51,7 @@ export const POST = createRoute(
       );
     }
 
-    const imageUrl = `https://${env.S3_BUCKET_NAME}.s3.${env.AWS_REGION}.amazonaws.com/${name}`;
+    const imageUrl = `${env.AWS_S3_CLOUDFRONT_URL}/${name}`;
 
     await prisma.$transaction(async (tx) => {
       const { count } = await tx.supplierPanelPhoto.updateMany({

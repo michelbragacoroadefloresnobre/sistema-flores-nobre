@@ -1,5 +1,6 @@
 import { DeliveryPeriod, OrderStatus, SupplierPanelStatus } from "@/generated/prisma/enums";
-import { sendMessage } from "@/lib/helena";
+import { sendTemplate } from "@/lib/helena";
+import { env } from "@/lib/env";
 import prisma from "@/lib/prisma";
 import { buildConfirmationMessage, sendMessageToSupplier } from "@/lib/zapi";
 import { format } from "date-fns";
@@ -154,8 +155,11 @@ async function handleApproveOrder(panelId: string, phone: string) {
     console.error("Erro ao enviar confirmação:", e.response?.data || e);
   }
 
-  await sendMessage(
-    order.contact.phone,
-    `PEDIDO 📦 #NOBRE${order.id}\n\n*💐 Pedido em produção*\nEstamos montando seu presente com todo o cuidado. Avisaremos quando estiver pronto`,
-  );
+  await sendTemplate({
+    number: order.contact.phone,
+    templateId: env.HELENA_PEDIDO_PRODUCAO_TEMPLATE_ID,
+    parameters: {
+      pedido: `${order.id}`,
+    },
+  });
 }

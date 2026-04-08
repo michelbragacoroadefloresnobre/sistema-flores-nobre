@@ -24,7 +24,7 @@ export const createOrderSchema = z.object({
     .string({ message: "Data de entrega é obrigatório" })
     .min(1)
     .optional(),
-  deliveryExpressTime: z.enum(["PT1H", "PT2H", "PT3H"]).optional(),
+  deliveryUntil: z.string().min(1).optional(),
 
   sellerId: z
     .string({ message: "Vendedor é obrigatório" })
@@ -32,7 +32,6 @@ export const createOrderSchema = z.object({
   contactOrigin: z.enum(ContactOrigin),
 
   paymentType: z.enum(PaymentType),
-  boletoDue: z.string().min(1).optional(),
   paymentStatus: z.enum([PaymentStatus.PAID, PaymentStatus.ACTIVE], {
     message: "Escolha se foi pago ou não pago",
   }),

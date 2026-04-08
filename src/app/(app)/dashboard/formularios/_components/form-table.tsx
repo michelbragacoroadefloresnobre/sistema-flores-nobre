@@ -17,9 +17,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Form, FormStatus } from "@/generated/prisma/browser";
-import { cn, formatPhoneInput } from "@/lib/utils";
+import { Role } from "@/generated/prisma/enums";
+import { authClient } from "@/lib/auth/client";
+import { canPerformAction, cn, formatPhoneInput } from "@/lib/utils";
 import { FormTableItem } from "@/modules/form/form.dto";
 import { CheckedState } from "@radix-ui/react-checkbox";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 import {
   ChevronLeft,
   ChevronRight,
@@ -46,6 +50,19 @@ const FormTable = ({
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(defaultItemsPerPage);
+
+  const { data: session } = authClient.useSession();
+  const canUpdateStatus = canPerformAction(
+    [Role.SUPERVISOR],
+    session?.user.role as Role,
+  );
+
+  const queryClient = useQueryClient();
+  const { mutate: updateStatus, isPending: isUpdatingStatus } = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: FormStatus }) =>
+      axios.patch(`/api/forms/${id}`, { status }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["forms"] }),
+  });
 
   const totalPages = Math.ceil(forms.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -237,14 +254,47 @@ const FormTable = ({
                     </TableCell>
 
                     <TableCell className="text-center py-4">
-                      <span
-                        className={cn(
-                          "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border",
-                          statusProps.className,
-                        )}
-                      >
-                        {statusProps.label}
-                      </span>
+                      {canUpdateStatus ? (
+                        <Select
+                          value={form.status}
+                          onValueChange={(value) =>
+                            updateStatus({
+                              id: form.id,
+                              status: value as FormStatus,
+                            })
+                          }
+                          disabled={isUpdatingStatus}
+                        >
+                          <SelectTrigger
+                            className={cn(
+                              "h-7 w-auto px-2.5 rounded-full text-xs font-medium border gap-1.5",
+                              statusProps.className,
+                            )}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={FormStatus.NOT_CONVERTED}>
+                              Não Convertido
+                            </SelectItem>
+                            <SelectItem value={FormStatus.CONVERTED}>
+                              Convertido
+                            </SelectItem>
+                            <SelectItem value={FormStatus.CANCELLED}>
+                              Cancelado
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <span
+                          className={cn(
+                            "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border",
+                            statusProps.className,
+                          )}
+                        >
+                          {statusProps.label}
+                        </span>
+                      )}
                     </TableCell>
                     <TableCell className="text-center py-4">
                       <Button
