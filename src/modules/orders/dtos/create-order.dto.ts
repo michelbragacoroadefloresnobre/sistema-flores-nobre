@@ -32,7 +32,6 @@ export const createOrderSchema = z.object({
   contactOrigin: z.enum(ContactOrigin),
 
   paymentType: z.enum(PaymentType),
-  boletoDue: z.string().min(1).optional(),
   paymentStatus: z.enum([PaymentStatus.PAID, PaymentStatus.ACTIVE], {
     message: "Escolha se foi pago ou não pago",
   }),
