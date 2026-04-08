@@ -5,7 +5,6 @@ import {
   LeadStatus,
   LogType,
   OrderStatus,
-  PaymentType,
   Prisma,
   SupplierPaymentStatus,
 } from "@/generated/prisma/client";
@@ -53,9 +52,7 @@ export const POST = createRoute(
     let deliveryUntil: DateTime;
 
     if (body.deliveryPeriod === DeliveryPeriod.EXPRESS)
-      deliveryUntil = DateTime.now().plus(
-        Duration.fromISO(body.deliveryExpressTime!),
-      );
+      deliveryUntil = DateTime.fromISO(body.deliveryUntil!);
     else {
       const hour = periodHours[body.deliveryPeriod];
 
@@ -208,10 +205,6 @@ export const POST = createRoute(
           type: body.paymentType,
           orderId: order.id,
           status: body.paymentStatus,
-          boletoDue:
-            body.paymentType === PaymentType.BOLETO
-              ? body.boletoDue
-              : undefined,
           productName: `Pedido #NOBRE${order.id}`,
         },
         customer: contact,

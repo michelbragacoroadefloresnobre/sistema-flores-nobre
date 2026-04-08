@@ -40,7 +40,6 @@ const CreateOrder = ({ serverData, phone }: Props) => {
       contactOrigin: "" as any,
       paymentType: "" as any,
       paymentStatus: PaymentStatus.ACTIVE,
-      boletoDue: "" as any,
       internalNote: "",
       isWaited: false,
 

@@ -20,6 +20,7 @@ const nextConfig: NextConfig = {
     ],
   },
   reactCompiler: false,
+  serverExternalPackages: ["pdfkit"],
 };
 
 export default nextConfig;

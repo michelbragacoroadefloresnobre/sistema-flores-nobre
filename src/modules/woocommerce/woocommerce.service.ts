@@ -132,7 +132,7 @@ const VALID_UFS = new Set([
 const PAYMENT_TYPE_MAP: Record<string, Prisma.PaymentCreateInput["type"]> = {
   "woo-pagarme-payments-credit_card": "CARD_CREDIT",
   "woo-pagarme-payments-pix": "PIX",
-  "woo-pagarme-payments-billet": "BOLETO",
+  "woo-pagarme-payments-billet": "PIX",
 };
 
 const DELIVERY_PERIOD_MAP: Record<

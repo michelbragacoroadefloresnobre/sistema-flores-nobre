@@ -12,7 +12,6 @@ import prisma from "@/lib/prisma";
 import { createId } from "@paralleldrive/cuid2";
 import createHttpError from "http-errors";
 
-import { sendBoleto } from "../message/boleto.service";
 import { deliveryPeriodMap, getVariantLabel, hasRoles } from "@/lib/utils";
 import { format } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
@@ -100,28 +99,6 @@ export async function notifyPayment({
     return;
   }
 
-  if (payment.type === PaymentType.BOLETO && payment.url) {
-    const message = buildLinkPaymentMessage({
-      ...baseMessageParams,
-      payment: null,
-      paymentType: PAYMENT_TYPE_MAP[payment.type] || null,
-      deliveryHour: `Até ${timeFormatted}`,
-      productList
-    });
-
-    // scheduleBoletoDueNotification logic here if needed...
-
-    await sendBoleto({
-      orderId: order.id,
-      message,
-      name: customer.name,
-      phone: customer.phone,
-      email: customer.email,
-      pdfLink: payment.url,
-    });
-    return;
-  }
-
   if (payment.type === PaymentType.PIX && payment.text && payment.url) {
     const message = buildLinkPaymentMessage({
       ...baseMessageParams,
@@ -145,7 +122,6 @@ type ProcessPaymentParams = {
     type: PaymentType;
     status: PaymentStatus;
     amount: string;
-    boletoDue?: string;
     orderId: string;
     productName: string;
   };
@@ -184,7 +160,7 @@ export async function createPayment({
     return { payment };
   }
 
-  if (body.type === PaymentType.BOLETO || body.type === PaymentType.PIX) {
+  if (body.type === PaymentType.PIX) {
     const customerName =
       customer.personType === PersonType.PJ
         ? customer.legalName!
@@ -206,13 +182,9 @@ export async function createPayment({
         city: city.name,
         state: city.uf,
       },
-      boletoDue:
-        body.type === PaymentType.BOLETO
-          ? new Date(body.boletoDue!)
-          : undefined,
       value: Number(body.amount),
       product: body.productName,
-      paymentMethod: body.type.toLowerCase() as any,
+      paymentMethod: "pix",
     });
 
     const orderPayment = await Pagarme.createOrder(CNPJ.FN, paymentPayload);
@@ -225,8 +197,6 @@ export async function createPayment({
         amount: body.amount,
         orderId: body.orderId,
         status: PaymentStatus.ACTIVE,
-        boletoDueAt:
-          body.type === PaymentType.BOLETO ? body.boletoDue : undefined,
         externalId: paymentData.id,
         url: paymentData.url,
         text: paymentData.text,

@@ -1,4 +1,4 @@
-import { PaymentStatus, PaymentType } from "@/generated/prisma/enums";
+import { PaymentStatus } from "@/generated/prisma/enums";
 import { createRoute } from "@/lib/handler/route-handler";
 import prisma from "@/lib/prisma";
 import { paymentFormSchema } from "@/modules/payments/payment.dto";
@@ -27,8 +27,6 @@ export const POST = createRoute(
         type: body.paymentType,
         orderId: order.id,
         status: PaymentStatus.ACTIVE,
-        boletoDue:
-          body.paymentType === PaymentType.BOLETO ? body.boletoDue : undefined,
         productName: "Flores",
       },
       customer: order.contact,

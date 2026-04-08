@@ -38,7 +38,7 @@ import { cn, convertCurrencyInput } from "@/lib/utils";
 import { paymentFormSchema } from "@/modules/payments/payment.dto";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
-import { addDays, format } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Barcode,
@@ -83,12 +83,9 @@ export function PaymentsSection({
     defaultValues: {
       paymentType: "" as any,
       amount: "",
-      boletoDue: "",
       orderId,
     },
   });
-
-  const watchType = form.watch("paymentType");
 
   const getTipoIcon = (type: PaymentType) => {
     const iconClass = "h-4 w-4";
@@ -165,13 +162,6 @@ export function PaymentsSection({
   };
 
   const handleCreatePayment = async (data: PaymentFormData) => {
-    if (data.paymentType === PaymentType.BOLETO && !data.boletoDue)
-      return toast.error("Especifique uma data de vencimento para boleto");
-    if (data.boletoDue)
-      data.boletoDue = addDays(
-        new Date(),
-        parseInt(data.boletoDue || ""),
-      ).toISOString();
     setIsCreationPending(true);
     try {
       const { message } = await axios
@@ -270,9 +260,6 @@ export function PaymentsSection({
                         </FormControl>
 
                         <SelectContent>
-                          <SelectItem value={PaymentType.BOLETO}>
-                            Boleto
-                          </SelectItem>
                           <SelectItem value={PaymentType.CARD_CREDIT}>
                             Cartão de Crédito
                           </SelectItem>
@@ -315,52 +302,6 @@ export function PaymentsSection({
                     </FormItem>
                   )}
                 />
-
-                {watchType === PaymentType.BOLETO && (
-                  <FormField
-                    control={form.control}
-                    name="boletoDue"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Vencimento do Boleto</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Selecione o vencimento" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value={"7"}>
-                              7 dias (
-                              {format(addDays(new Date(), 7), "dd/MM/yyyy", {
-                                locale: ptBR,
-                              })}
-                              )
-                            </SelectItem>
-                            <SelectItem value={"15"}>
-                              15 dias (
-                              {format(addDays(new Date(), 15), "dd/MM/yyyy", {
-                                locale: ptBR,
-                              })}
-                              )
-                            </SelectItem>
-                            <SelectItem value={"30"}>
-                              30 dias (
-                              {format(addDays(new Date(), 30), "dd/MM/yyyy", {
-                                locale: ptBR,
-                              })}
-                              )
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
 
                 <DialogFooter>
                   <Button

@@ -48,7 +48,11 @@ export interface iOrderDelivering {
   id: string;
   deliveryPeriod: DeliveryPeriod;
   deliveryUntil: string;
-  supplierPanel: { id: string; cost: string | null };
+  supplierPanel: {
+    id: string;
+    cost: string | null;
+    approvedPhotos: Array<{ id: string; imageUrl: string }>;
+  };
   seller: { id: string; name: string };
   supplierName: string;
   orderStatus: OrderStatus;

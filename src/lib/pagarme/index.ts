@@ -89,8 +89,7 @@ function buildOrderPayload(data: {
   };
   value: number;
   product: string;
-  paymentMethod: "pix" | "boleto" | "credit_card";
-  boletoDue?: Date;
+  paymentMethod: "pix" | "credit_card";
   card?: {
     cardNumber: string;
     cardName: string;
@@ -140,26 +139,6 @@ function buildOrderPayload(data: {
       payment_method: "pix",
       pix: {
         expires_at: addDays(new Date(), 1).toISOString(),
-      },
-    });
-  } else if (data.paymentMethod === "boleto") {
-    basePayload.payments.push({
-      payment_method: "boleto",
-      boleto: {
-        bank: "237",
-        due_at: data.boletoDue,
-        document_number: data.id.slice(0, 16),
-        type: "DM",
-        interest: {
-          days: 1,
-          type: "percentage",
-          amount: 1,
-        },
-        fine: {
-          days: 1,
-          type: "percentage",
-          amount: 1,
-        },
       },
     });
   } else if (data.paymentMethod === "credit_card" && data.card) {
@@ -233,11 +212,6 @@ function extractPaymentData(orderData: PagarmeOrderResponse): {
     paymentData = {
       text: lastTransaction.qr_code!,
       url: lastTransaction.qr_code_url!,
-    };
-  } else if (paymentMethod === "boleto") {
-    paymentData = {
-      text: undefined,
-      url: lastTransaction.pdf!,
     };
   }
 
