@@ -24,7 +24,7 @@ export const createOrderSchema = z.object({
     .string({ message: "Data de entrega é obrigatório" })
     .min(1)
     .optional(),
-  deliveryExpressTime: z.enum(["PT1H", "PT2H", "PT3H"]).optional(),
+  deliveryUntil: z.string().min(1).optional(),
 
   sellerId: z
     .string({ message: "Vendedor é obrigatório" })

@@ -52,9 +52,7 @@ export const POST = createRoute(
     let deliveryUntil: DateTime;
 
     if (body.deliveryPeriod === DeliveryPeriod.EXPRESS)
-      deliveryUntil = DateTime.now().plus(
-        Duration.fromISO(body.deliveryExpressTime!),
-      );
+      deliveryUntil = DateTime.fromISO(body.deliveryUntil!);
     else {
       const hour = periodHours[body.deliveryPeriod];
 

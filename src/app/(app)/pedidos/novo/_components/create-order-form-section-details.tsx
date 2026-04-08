@@ -29,6 +29,18 @@ import axios from "axios";
 import { ChevronRight } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 
+function toDatetimeLocal(isoString: string): string {
+  if (!isoString) return "";
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function expressDeliveryTime(): string {
+  return new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString();
+}
+
 interface DetalhesSectionProps {
   form: UseFormReturn<CreateOrderData>;
   onNext: () => void;
@@ -45,7 +57,7 @@ export function CreateOrderFormSectionDetails({
     const isValidated = await form.trigger([
       "deliveryPeriod",
       "deliveryDate",
-      "deliveryExpressTime",
+      "deliveryUntil",
       "sellerId",
       "contactOrigin",
       "paymentType",
@@ -93,10 +105,10 @@ export function CreateOrderFormSectionDetails({
                     field.onChange(v);
                     if (v === DeliveryPeriod.EXPRESS) {
                       form.unregister("deliveryDate");
-                      form.setValue("deliveryExpressTime", "" as any);
+                      form.setValue("deliveryUntil", expressDeliveryTime());
                     } else {
                       form.setValue("deliveryDate", "");
-                      form.unregister("deliveryExpressTime");
+                      form.unregister("deliveryUntil");
                     }
                   }}
                 >
@@ -125,24 +137,20 @@ export function CreateOrderFormSectionDetails({
           {isExpressDelivery ? (
             <FormField
               control={form.control}
-              name="deliveryExpressTime"
+              name="deliveryUntil"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Entregar em até <b className="text-red-600">*</b>
+                    Entrega Até <b className="text-red-600">*</b>
                   </FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl className="w-full">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um tempo máximo" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="PT1H">1 hora</SelectItem>
-                      <SelectItem value="PT2H">2 horas</SelectItem>
-                      <SelectItem value="PT3H">3 horas</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl className="w-full">
+                    <Input
+                      readOnly
+                      className="w-full cursor-default"
+                      type="datetime-local"
+                      value={toDatetimeLocal(field.value ?? "")}
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />
