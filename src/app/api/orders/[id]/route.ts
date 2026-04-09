@@ -65,6 +65,7 @@ export const PUT = createRoute(
           userId: body.sellerId,
           internalNote: body.internalNote,
           honoreeName: body.honoreeName,
+          senderName: body.senderName,
           tributeCardPhrase: body.tributeCardPhrase,
           supplierNote: body.supplierNote,
           deliveryAddress: body.deliveryAddress,

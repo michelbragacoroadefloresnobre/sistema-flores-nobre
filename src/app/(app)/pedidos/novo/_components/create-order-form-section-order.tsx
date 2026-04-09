@@ -104,23 +104,43 @@ export function CreateOrderFormSectionOrder({
     <div className="space-y-6">
       <CardContent className="space-y-6">
         <div className="grid gap-4">
-          <FormField
-            control={form.control}
-            name="honoreeName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>
-                  Nome do Homenageado <b className="text-red-600">*</b>
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder="Digite o nome do homenageado"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
+          <div className="grid md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="honoreeName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Nome do Homenageado <b className="text-red-600">*</b>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Digite o nome do homenageado"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="senderName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nome do Remetente</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      value={field.value ?? ""}
+                      maxLength={100}
+                      placeholder="Digite o nome de quem está enviando"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
 
           <div className="grid md:grid-cols-2 gap-4">
             <FormField
@@ -136,8 +156,9 @@ export function CreateOrderFormSectionOrder({
                       maxLength={1024}
                       {...field}
                       placeholder="Feliz aniversário! Com carinho..."
+                      className="h-18 resize-none overflow-y-auto"
                     />
-                  </FormControl>
+                  </FormControl>  
                 </FormItem>
               )}
             />

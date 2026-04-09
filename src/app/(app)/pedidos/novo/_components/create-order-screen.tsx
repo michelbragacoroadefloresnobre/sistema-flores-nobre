@@ -14,7 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { ClipboardList, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { OrderSummarySection } from "../../_components/order-summary-section";
@@ -43,6 +43,7 @@ const CreateOrder = ({ serverData, phone }: Props) => {
       isWaited: false,
 
       // Pedido
+      senderName: serverData?.name || "",
       honoreeName: "",
       tributeCardPhrase: "",
       supplierNote: "",
@@ -76,6 +77,18 @@ const CreateOrder = ({ serverData, phone }: Props) => {
       productVariants: [],
     },
   });
+
+  const prevCustomerNameRef = useRef(form.getValues("customerName"));
+
+  const customerName = form.watch("customerName");
+
+  useEffect(() => {
+    const currentSender = form.getValues("senderName");
+    if (!currentSender || currentSender === prevCustomerNameRef.current) {
+      form.setValue("senderName", customerName);
+    }
+    prevCustomerNameRef.current = customerName;
+  }, [customerName, form]);
 
   const { fields: products, replace: replaceProducts } = useFieldArray({
     control: form.control,
