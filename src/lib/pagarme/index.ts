@@ -124,7 +124,7 @@ function buildOrderPayload(data: {
     },
     items: [
       {
-        amount: data.value * 100,
+        amount: Math.round(data.value * 100),
         description: data.product,
         quantity: 1,
         code: data.orderId,
