@@ -59,6 +59,7 @@ const EditOrderScreen = ({ order }: Props) => {
       internalNote: order.internalNote || "",
 
       // Pedido
+      senderName: order.senderName || "",
       honoreeName: order.honoreeName || "",
       tributeCardPhrase: order.tributeCardPhrase || "",
       supplierNote: order.supplierNote || "",

@@ -157,7 +157,7 @@ export const POST = createRoute(
           isWaited: body.isWaited,
           internalNote: body.internalNote,
           honoreeName: body.honoreeName,
-          senderName: contact.name,
+          senderName: body.senderName || contact.name,
           tributeCardPhrase: body.tributeCardPhrase,
           supplierNote: body.supplierNote,
           supplierPaymentStatus: SupplierPaymentStatus.WAITING,

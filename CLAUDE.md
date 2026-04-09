@@ -28,6 +28,9 @@ No test suite is configured.
 - **Zustand** for client-side state (with localStorage persistence)
 - **TanStack Query** for client-side data fetching
 
+## Behaviors
+- When in "Plan Mode," simply converse to develop the necessary context and wait for clear instructions to generate the plan.
+
 ### Key directories
 
 - `src/app/(app)/` — Protected routes (auth required via layout)

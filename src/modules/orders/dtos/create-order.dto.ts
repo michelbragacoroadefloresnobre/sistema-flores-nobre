@@ -40,6 +40,10 @@ export const createOrderSchema = z.object({
   isWaited: z.boolean().default(false),
 
   // Order
+  senderName: z
+    .string()
+    .max(100)
+    .optional(),
   honoreeName: z
     .string({ message: "Nome do falecido é obrigatório" })
     .min(1, "Nome do falecido é obrigatório!")

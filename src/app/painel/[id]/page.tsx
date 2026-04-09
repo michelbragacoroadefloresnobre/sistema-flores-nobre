@@ -8,9 +8,11 @@ import { ReactNode } from "react";
 import { CancelButton } from "./_components/cancel-button";
 import { CostSection } from "./_components/cost-section";
 import { DeliveredSection } from "./_components/delivered-section";
+import { DeliveryLabelButton } from "./_components/delivery-label-button";
 import { DeliveringSection } from "./_components/delivering-section";
 import { ImageSection } from "./_components/image-section";
 import { OrderInfoRow } from "./_components/order-info-row";
+import { TributeCardButton } from "./_components/tribute-card-button";
 import { formatInTimeZone } from "date-fns-tz";
 
 const BrandLogo = ({ className }: { className?: string }) => (
@@ -92,6 +94,8 @@ export default async function Page({
       supplierPanelPhotos: true,
       order: {
         include: {
+          city: true,
+          contact: { select: { phone: true } },
           orderProducts: {
             include: {
               variant: { include: { product: { select: { name: true } } } },
@@ -283,8 +287,16 @@ export default async function Page({
               <CostSection supplierPanel={supplierPanel} />
             </div>
 
-            {isCancelable && (
+            {order.tributeCardPhrase && (
               <div className="mt-6 pt-6 border-t border-border">
+                <TributeCardButton panelId={supplierPanel.id} />
+              </div>
+            )}
+            <div className="mt-4">
+              <DeliveryLabelButton panelId={supplierPanel.id} />
+            </div>
+            {isCancelable && (
+              <div className="mt-4">
                 <CancelButton panelId={supplierPanel.id} />
               </div>
             )}

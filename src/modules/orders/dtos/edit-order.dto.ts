@@ -30,6 +30,10 @@ export const editOrderSchema = z
     internalNote: z.string(),
 
     // Order
+    senderName: z
+      .string({ message: "Nome do remetente é obrigatório" })
+      .min(1, "Nome do remetente é obrigatório!")
+      .max(100),
     honoreeName: z
       .string({ message: "Nome do falecido é obrigatório" })
       .min(1, "Nome do falecido é obrigatório!")
