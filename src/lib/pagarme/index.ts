@@ -1,12 +1,11 @@
 import axios from "axios";
 import { addDays } from "date-fns";
-import createHttpError from "http-errors";
+import createHttpError, { isHttpError } from "http-errors";
 import { CNPJ, env } from "../env";
 import { CreatePagarmeOrderPayment, PagarmeOrderResponse } from "./types";
 
-async function getApi(cnpjType: CNPJ) {
-  try {
-    let credentials;
+function getApi(cnpjType: CNPJ) {
+  let credentials;
   switch (cnpjType) {
     case CNPJ.FN:
       credentials = Buffer.from(`${env.PAGARME_SECRET_KEY}:`).toString(
@@ -22,10 +21,6 @@ async function getApi(cnpjType: CNPJ) {
       Authorization: "Basic " + credentials,
     },
   });
-  } catch (error:any) {
-    console.error("Error creating Pagarme API client:", error);
-  }
-  
 }
 
 async function createOrder(
@@ -33,14 +28,11 @@ async function createOrder(
   orderData: CreatePagarmeOrderPayment,
 ) {
   try {
-    const response = await (await getApi(cnpjType))?.post("/orders", orderData);
+    const response = await getApi(cnpjType).post("/orders", orderData);
 
-    const data = response?.data as PagarmeOrderResponse;
+    const data = response.data as PagarmeOrderResponse;
 
     const charges = data?.charges[0];
-
-    console.log("Payment:", JSON.stringify(data, null, 2));
-
     const lastTransaction = charges?.last_transaction;
     const gatewayError = lastTransaction.gateway_response.errors?.[0]?.message;
 
@@ -49,22 +41,23 @@ async function createOrder(
         throw new createHttpError.BadRequest("O CPF cadastrado é invalido");
       else if (gatewayError?.includes("CNPJ"))
         throw new createHttpError.BadRequest("O CNPJ cadastrado é invalido");
+      console.error(`[Pagarme] Gateway 400 | code: ${orderData.code} | erro: ${gatewayError}`);
       throw new createHttpError.BadRequest(
         "Verifique os dados e tente novamente",
       );
     }
 
-    if (!lastTransaction.success)
+    if (!lastTransaction.success) {
+      console.error(`[Pagarme] Pagamento reprovado | code: ${orderData.code} | status: ${lastTransaction.status} | gateway: ${JSON.stringify(lastTransaction.gateway_response)}`);
       throw new createHttpError.BadRequest("Pagamento reprovado");
+    }
 
     return data;
   } catch (error: any) {
-    if (error.status || error.statusCode) throw error;
+    if (isHttpError(error)) throw error;
 
     if (error.response) {
-      console.error("Pagarme error status:", error.response.status);
-      console.error("Pagarme error body:", JSON.stringify(error.response.data, null, 2));
-      throw new createHttpError.BadGateway("Erro ao processar pagamento no gateway");
+      console.error(`[Pagarme] Erro HTTP ${error.response.status} | code: ${orderData.code} | body:`, JSON.stringify(error.response.data, null, 2));
     }
 
     throw error;
@@ -124,7 +117,7 @@ function buildOrderPayload(data: {
     },
     items: [
       {
-        amount: data.value * 100,
+        amount: Math.round(data.value * 100),
         description: data.product,
         quantity: 1,
         code: data.orderId,
@@ -165,7 +158,7 @@ function buildOrderPayload(data: {
 }
 
 async function refundPayment(externalId: string, amountInCents: number) {
-  const api = await getApi(CNPJ.FN);
+  const api = getApi(CNPJ.FN);
 
   let response;
   try {
@@ -183,6 +176,7 @@ async function refundPayment(externalId: string, amountInCents: number) {
   const VALID_STATUSES = ["refunded", "pending_refund", "partial_refunded"];
 
   if (!VALID_STATUSES.includes(status)) {
+    console.error(`[Pagarme] Status inesperado no estorno | chargeId: ${externalId} | status: ${status}`);
     throw new createHttpError.BadGateway(
       "O gateway retornou um status inesperado para o estorno",
     );
